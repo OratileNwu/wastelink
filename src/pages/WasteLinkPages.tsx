@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, Boxes, CalendarDays, Check, ChevronRight, ClipboardList, Clock3, Handshake, Leaf, MapPin, Package, PackageSearch, Plus, Recycle, Search, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Boxes, Check, ChevronRight, ClipboardList, Clock3, Handshake, Leaf, Package, PackageSearch, Plus, Recycle, Search, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react'
 import { formatRequirementPrice, isActiveRequirement, todayLocal, useRequirements } from '../features/buyer/requirements'
 import type { BuyerRequirementDraft, RequirementInput } from '../features/buyer/requirements'
 
