@@ -126,11 +126,15 @@ export default function ProfileSettings({ profile, onSave }: Props) {
         location,
         enabledActivities,
       });
+      const hadPhotoPreview = Boolean(temporaryPhotoUrl);
       if (temporaryPhotoUrl) URL.revokeObjectURL(temporaryPhotoUrl);
       setTemporaryPhotoUrl("");
       setPhotoPreview(profile.profileImageUrl ?? "");
+      if (fileInput.current) fileInput.current.value = "";
       setEditing(false);
-      setMessage("Your WasteLink profile has been saved.");
+      setMessage(hadPhotoPreview
+        ? "Your profile details were saved. The selected photo was only a preview and was not uploaded."
+        : "Your WasteLink profile has been saved.");
       setMessageType("success");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "We couldn't save your changes. Please try again.");
