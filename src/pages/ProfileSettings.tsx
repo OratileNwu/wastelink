@@ -39,7 +39,6 @@ type Props = {
 const activityOptions: { value: Activity; label: string; description: string }[] = [
   { value: "seller", label: "Seller", description: "List PET bottles and manage collections." },
   { value: "buyer", label: "Buyer", description: "Find PET bottles and manage purchases." },
-  { value: "transporter", label: "Transporter", description: "Accept collection and delivery requests." },
 ];
 
 function formatDate(value: Date | null) {
