@@ -40,3 +40,36 @@
 .security-list>div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #edf1ee;font-size:11px}.security-list>div:first-child{border-top:0;padding-top:0}.security-list span{color:#7d8a81;text-transform:capitalize}.security-list strong{font-size:11px;color:#44564a;text-transform:capitalize;text-align:right}.security-list strong.verified{color:#25804d}
 .profile-footer{display:flex;justify-content:space-between;gap:15px;margin-top:23px;color:#89958d;font-size:10px}.profile-footer span:first-child{display:flex;align-items:center;gap:6px}
 @media(max-width:760px){.profile-content{padding:28px 16px}.profile-heading{align-items:flex-start;flex-direction:column}.profile-heading h1{font-size:25px}.profile-grid{grid-template-columns:1fr}.profile-identity{align-items:flex-start;flex-wrap:wrap}.verification-summary{width:100%;padding-left:94px}.profile-topbar{padding:0 17px}.field-grid{grid-template-columns:1fr}.field-full{grid-column:auto}.profile-footer{flex-direction:column}}
+
+
+/* Profile feedback states */
+.profile-message.message-success {
+  border-color: #b9dfc9;
+  background: #edf8f1;
+  color: #226440;
+}
+
+.profile-message.message-error {
+  border-color: #f2c4c4;
+  background: #fff1f1;
+  color: #a12c2c;
+}
+
+.profile-message.message-info {
+  border-color: #c8d9eb;
+  background: #f0f6fc;
+  color: #315c83;
+}
+
+.profile-field input:disabled,
+.profile-field select:disabled {
+  cursor: not-allowed;
+}
+
+.toggle-switch:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.avatar-edit:focus-visible {
+  outline: 3px solid #8bc6a1;
+  outline-offset: 3px;
+}
