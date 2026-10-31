@@ -59,7 +59,7 @@ export default function ProfileSettings({ profile, onSave }: Props) {
     if (temporaryPhotoUrl) URL.revokeObjectURL(temporaryPhotoUrl);
   }, [temporaryPhotoUrl]);
 
-  const updateLocation = (key: keyof Address, value: string) => {
+  const updateLocation = (key: "streetAddress" | "suburb" | "postalCode" | "city" | "province" | "country", value: string) => {
     setLocation((current) => ({ ...current, [key]: value }));
   };
 
