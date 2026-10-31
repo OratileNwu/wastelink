@@ -28,7 +28,6 @@ type Props = {
 const cash = (n: number) => new Intl.NumberFormat('en-ZA',{style:'currency',currency:'ZAR'}).format(n)
 const weight = (n: number) => new Intl.NumberFormat('en-ZA',{maximumFractionDigits:2}).format(n)
 const human = (s: string) => s.replaceAll('_',' ')
-const when = (seconds?:number) => seconds ? new Intl.DateTimeFormat('en-ZA',{day:'numeric',month:'short',year:'numeric'}).format(new Date(seconds*1000)) : 'Date pending'
 const nav: {id:Page;label:string;icon:LucideIcon}[] = [
   {id:'overview',label:'Overview',icon:LayoutGrid},
   {id:'materials',label:'My materials',icon:Box},
