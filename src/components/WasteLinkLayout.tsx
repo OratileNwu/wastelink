@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { UserActivity } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck } from 'lucide-react'
@@ -39,6 +40,7 @@ function NavSection({ title, items, onNavigate }: { title: string; items: NavIte
 }
 
 export function WasteLinkLayout() {
+  const { firebaseUser, profile } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const isBuyer = location.pathname.startsWith('/buyer') || ['/marketplace', '/offers', '/my-purchases'].includes(location.pathname)
@@ -82,7 +84,7 @@ export function WasteLinkLayout() {
             </span>
           </label>
           <Link to="/notifications" className="wl-icon-button" aria-label="Notifications"><Bell size={21} /></Link>
-          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>Account not connected</strong><small>Preview mode</small></span><ChevronDown size={15} /></Link>
+          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>{profile?.fullName || firebaseUser?.email || "Account not connected"}</strong><small>{profile?.email || (firebaseUser ? "WasteLink account" : "Preview mode")}</small></span><ChevronDown size={15} /></Link>
         </div>
       </header>
       <main className="wl-page"><Outlet /></main>
