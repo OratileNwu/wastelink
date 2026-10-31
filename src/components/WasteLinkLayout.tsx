@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Boxes, ChartNoAxesCombined, ChevronDown, ClipboardList, CircleUserRound, Handshake, House, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, X } from 'lucide-react'
+import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, X } from 'lucide-react'
 
 type NavItem = { label: string; to: string; icon: ComponentType<{ size?: number; strokeWidth?: number }> }
 
@@ -45,7 +46,7 @@ export function WasteLinkLayout() {
 
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
-  function searchRequirements(event: React.FormEvent<HTMLFormElement>) {
+  function searchRequirements(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     navigate('/buyer/requirements?q=' + encodeURIComponent(query.trim()))
   }
