@@ -1,0 +1,41 @@
+/* WasteLink dashboard foundation: extends the shared design tokens. */
+#root{min-height:100vh}
+.wl-app{min-height:100vh;display:flex;flex-direction:column}
+.wl-main{flex:1}
+.wl-header{box-shadow:var(--shadow-sm)}
+.wl-header-inner{min-height:var(--header-height)}
+.wl-logo{width:36px;height:36px;border-radius:var(--radius-sm);display:grid;place-items:center;background:var(--color-primary);color:white}
+.wl-nav .navbar-link.active{font-weight:700}
+.wl-hero{background:linear-gradient(130deg,var(--color-primary-dark),var(--color-primary));color:#fff}
+.wl-hero-content{padding-block:clamp(64px,9vw,112px)}
+.wl-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--radius-pill);background:rgba(255,255,255,.12);font-size:var(--font-sm);font-weight:600}
+.wl-hero h1{max-width:790px;margin-top:24px;color:white;font-size:clamp(38px,6vw,64px);letter-spacing:-1.6px;line-height:1.08}
+.wl-hero p{max-width:640px;margin-top:16px;color:rgba(255,255,255,.87);font-size:var(--font-lg)}
+.wl-actions{display:flex;flex-wrap:wrap;gap:16px;margin-top:32px}
+.wl-hero-primary{color:var(--color-primary-dark);background:#fff}
+.wl-hero-primary:hover{background:var(--color-primary-light)}
+.wl-hero-secondary{color:white;border-color:rgba(255,255,255,.5);background:transparent}
+.wl-hero-secondary:hover{background:rgba(255,255,255,.12)}
+.wl-section{padding-block:clamp(40px,6vw,72px)}
+.wl-section>p,.wl-heading-row p{margin-top:10px}
+.wl-kicker{display:block;color:var(--color-primary);font-size:var(--font-sm);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.wl-grid{display:grid;gap:var(--space-lg);margin-top:var(--space-xl)}
+.wl-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.wl-three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wl-tile{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-width:0}
+.wl-tile h2,.wl-tile h3{font-size:var(--font-lg)}
+.wl-tile-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:var(--radius-md);color:var(--color-primary);background:var(--color-primary-light)}
+.wl-text-link{display:inline-flex;align-items:center;gap:8px;margin-top:auto;color:var(--color-primary);font-weight:700;font-size:var(--font-sm)}
+.wl-text-link:hover,.wl-back:hover{text-decoration:underline}
+.wl-muted{font-size:var(--font-sm);color:var(--color-text-muted)}
+.wl-heading-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.wl-content{margin-top:32px}
+.wl-empty{min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--color-primary)}
+.wl-empty h2{font-size:var(--font-lg)}
+.wl-empty p{max-width:490px}
+.wl-back{display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;color:var(--color-primary);font-size:var(--font-sm)}
+.wl-footer{background:var(--color-surface);border-top:1px solid var(--color-border)}
+.wl-footer-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:24px;font-size:var(--font-sm);color:var(--color-text-muted)}
+.wl-footer strong{color:var(--color-primary)}
+@media(max-width:900px){.wl-three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.wl-header{height:auto}.wl-header-inner{flex-wrap:wrap;padding-block:12px}.wl-nav{width:100%;gap:16px;overflow-x:auto}.wl-nav .navbar-link{white-space:nowrap}.wl-two,.wl-three{grid-template-columns:1fr}.wl-heading-row{align-items:flex-start;flex-direction:column}.wl-footer-inner{align-items:flex-start;flex-direction:column}}
