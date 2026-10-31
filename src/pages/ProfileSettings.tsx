@@ -113,6 +113,11 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
       return;
     }
 
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      showMessage("Enter a valid email address.", "error");
+      return;
+    }
+
     if (form.phoneNumber.trim() && !/^\+?[0-9\s()-]{7,20}$/.test(form.phoneNumber.trim())) {
       showMessage("Enter a valid phone number using 7–20 digits, spaces or + ( ).", "error");
       return;
@@ -135,6 +140,8 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
 
       await onSave({
         fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        emailVerified: form.email.trim() === profile.email ? profile.emailVerified : false,
         phoneNumber: form.phoneNumber.trim(),
         location: form.location,
         enabledActivities: form.enabledActivities,
@@ -241,8 +248,8 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
               </label>
               <label className="profile-field">
                 <span>Email address</span>
-                <div className="input-with-icon"><Mail size={16} /><input value={form.email} disabled readOnly placeholder="Email will be provided by account sign-in" /></div>
-                <small>Email is managed by your sign-in account.</small>
+                <div className="input-with-icon"><Mail size={16} /><input type="email" value={form.email} disabled={!editing} maxLength={254} autoComplete="email" placeholder="name@example.com" onChange={event => update("email", event.target.value)} /></div>
+                <small>Update the email address shown on your WasteLink profile. This local demo does not change your sign-in credentials or verify a new address.</small>
               </label>
               <label className="profile-field">
                 <span>Phone number</span>
@@ -260,6 +267,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
             <div className="field-grid">
               <label className="profile-field"><span>Street / area</span><input value={form.location.streetAddress || ""} disabled={!editing} maxLength={150} placeholder="Street or area" onChange={event => updateLocation("streetAddress", event.target.value)} /></label>
               <label className="profile-field"><span>Suburb / village</span><input value={form.location.suburb || ""} disabled={!editing} maxLength={100} placeholder="Suburb or village" onChange={event => updateLocation("suburb", event.target.value)} /></label>
+              <label className="profile-field"><span>Postal code</span><input value={form.location.postalCode || ""} disabled={!editing} maxLength={12} autoComplete="postal-code" placeholder="e.g. 2745" onChange={event => updateLocation("postalCode", event.target.value)} /></label>
               <label className="profile-field"><span>City / town</span><input value={form.location.city} disabled={!editing} maxLength={100} placeholder="City or town" onChange={event => updateLocation("city", event.target.value)} /></label>
               <label className="profile-field"><span>Province</span><input value={form.location.province} disabled={!editing} maxLength={100} placeholder="Province" onChange={event => updateLocation("province", event.target.value)} /></label>
               <label className="profile-field field-full"><span>Country</span><input value={form.location.country} disabled={!editing} maxLength={100} onChange={event => updateLocation("country", event.target.value)} /></label>
