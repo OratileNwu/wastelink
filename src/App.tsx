@@ -60,7 +60,6 @@ function App() {
 
   const handlePhotoSelected = async (file: File) => {
     const photoUrl = await saveProfilePhoto(file);
-    setProfile(current => ({ ...current, profileImageUrl: photoUrl }));
     return photoUrl;
   };
 
