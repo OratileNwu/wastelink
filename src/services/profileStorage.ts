@@ -14,6 +14,7 @@ export const defaultProfile: ProfileSettingsData = {
   location: {
     streetAddress: "",
     suburb: "",
+    postalCode: "",
     city: "",
     province: "",
     country: "South Africa",
