@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Camera, Check, ChevronDown, CircleHelp, Globe2, Mail, MapPin,
+  Camera, ChevronDown, CircleHelp, Globe2, Mail, MapPin,
   Pencil, Phone, Save, ShieldCheck, UserRound, X,
 } from "lucide-react";
 import type {
@@ -105,6 +105,10 @@ export default function ProfileSettings({ profile = emptyProfile, onSave, onPhot
   };
 
   const save = async () => {
+    if (form.enabledActivities.length === 0) {
+      setMessage("Enable at least one WasteLink activity before saving.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     try {
