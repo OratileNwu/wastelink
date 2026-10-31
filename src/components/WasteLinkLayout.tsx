@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import type { UserActivity } from '../types'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, X } from 'lucide-react'
+import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck } from 'lucide-react'
 
 type NavItem = { label: string; to: string; icon: ComponentType<{ size?: number; strokeWidth?: number }> }
 
