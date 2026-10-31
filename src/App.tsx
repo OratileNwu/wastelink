@@ -1,83 +1,37 @@
-import { useEffect, useState } from "react";
-import ProfileSettings from "./pages/ProfileSettings";
-import type { ProfileSettingsData } from "./types/profile";
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { WasteLinkLayout } from './components/WasteLinkLayout'
+import ProfileSettingsRoute from './pages/ProfileSettingsRoute'
 import {
-  defaultProfile,
-  loadProfile,
-  loadProfilePhoto,
-  saveProfile,
-  saveProfilePhoto,
-} from "./services/profileStorage";
+  OverallDashboard,
+  BuyerDashboard,
+  IncomingMaterials,
+  BuyingRequirements,
+  RequirementForm,
+  WorkspaceEmptyPage,
+  SellerHandoff,
+} from './pages/WasteLinkPages'
 
-function App() {
-  const [profile, setProfile] = useState<ProfileSettingsData>(defaultProfile);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    let photoUrl = "";
-
-    const initialise = async () => {
-      const storedProfile = loadProfile();
-
-      try {
-        photoUrl = await loadProfilePhoto();
-      } catch {
-        // Profile details remain available if browser photo storage is unavailable.
-      }
-
-      if (!cancelled) {
-        setProfile({ ...storedProfile, profileImageUrl: photoUrl });
-        setLoading(false);
-      } else if (photoUrl) {
-        URL.revokeObjectURL(photoUrl);
-      }
-    };
-
-    initialise();
-
-    return () => {
-      cancelled = true;
-      if (photoUrl) URL.revokeObjectURL(photoUrl);
-    };
-  }, []);
-
-  const handleSave = async (changes: Partial<ProfileSettingsData>) => {
-    const updatedProfile: ProfileSettingsData = {
-      ...profile,
-      ...changes,
-      location: { ...profile.location, ...changes.location },
-      notificationPreferences: {
-        ...profile.notificationPreferences,
-        ...changes.notificationPreferences,
-      },
-      updatedAt: new Date(),
-    };
-
-    saveProfile(updatedProfile);
-    setProfile(updatedProfile);
-  };
-
-  const handlePhotoSelected = async (file: File) => {
-    const photoUrl = await saveProfilePhoto(file);
-    return photoUrl;
-  };
-
-  if (loading) {
-    return (
-      <main className="profile-page">
-        <div className="profile-content" role="status">Loading your WasteLink profile...</div>
-      </main>
-    );
-  }
-
+export default function App() {
   return (
-    <ProfileSettings
-      profile={profile}
-      onSave={handleSave}
-      onPhotoSelected={handlePhotoSelected}
-    />
-  );
+    <BrowserRouter>
+        <Routes>
+          <Route element={<WasteLinkLayout />}>
+            <Route index element={<OverallDashboard />} />
+            <Route path="/buyer" element={<BuyerDashboard />} />
+            <Route path="/buyer/materials" element={<IncomingMaterials />} />
+            <Route path="/buyer/requirements" element={<BuyingRequirements />} />
+            <Route path="/buyer/requirements/new" element={<RequirementForm />} />
+            <Route path="/buyer/collections" element={<WorkspaceEmptyPage kind="collections" />} />
+            <Route path="/buyer/transactions" element={<WorkspaceEmptyPage kind="transactions" />} />
+            <Route path="/notifications" element={<WorkspaceEmptyPage kind="notifications" />} />
+            <Route path="/settings" element={<ProfileSettingsRoute />} />
+            <Route path="/seller" element={<SellerHandoff />} />
+            <Route path="/marketplace" element={<Navigate to="/buyer/materials" replace />} />
+            <Route path="/offers" element={<Navigate to="/buyer/requirements" replace />} />
+            <Route path="/my-purchases" element={<Navigate to="/buyer/transactions" replace />} />
+            <Route path="*" element={<WorkspaceEmptyPage kind="not-found" />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+  )
 }
-
-export default App;

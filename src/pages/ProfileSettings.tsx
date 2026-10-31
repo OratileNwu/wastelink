@@ -3,33 +3,76 @@ import {
   Camera, ChevronDown, CircleHelp, Globe2, Mail, MapPin,
   Pencil, Phone, Save, ShieldCheck, UserRound, X,
 } from "lucide-react";
+import { isValidEnabledActivities } from "../types";
 import type {
-  Activity, NotificationPreferences, ProfileSettingsData,
-} from "../types/profile";
+  Address, FirestoreTimestamp, NotificationPreferences, UserActivity, UserProfile,
+} from "../types";
 import "../styles/profile.css";
 
-type Props = {
-  profile: ProfileSettingsData;
-  onSave: (changes: Partial<ProfileSettingsData>) => Promise<void> | void;
-  onPhotoSelected: (file: File) => Promise<string | void> | string | void;
+type ProfileForm = Omit<UserProfile, "location" | "phoneNumber" | "notificationPreferences" | "languagePreference"> & {
+  phoneNumber: string;
+  location: Address;
+  notificationPreferences: NotificationPreferences;
+  languagePreference: string;
 };
 
-const activityOptions: { value: Activity; label: string; description: string }[] = [
+type ProfileChanges = Partial<Pick<UserProfile,
+  "fullName" | "phoneNumber" | "location" | "enabledActivities" |
+  "notificationPreferences" | "languagePreference" | "profileImageUrl"
+>>;
+
+type Props = {
+  profile: UserProfile;
+  onSave: (changes: ProfileChanges) => Promise<void> | void;
+  onPhotoSelected: (file: File) => Promise<string>;
+  onEmailChange: (email: string) => Promise<void>;
+};
+
+const defaultAddress: Address = {
+  streetAddress: "",
+  suburb: "",
+  postalCode: "",
+  city: "",
+  province: "",
+  country: "South Africa",
+};
+
+const defaultNotificationPreferences: NotificationPreferences = {
+  emailNotifications: true,
+  collectionUpdates: true,
+  transactionUpdates: true,
+  offerNotifications: true,
+};
+
+function toForm(profile: UserProfile): ProfileForm {
+  return {
+    ...profile,
+    phoneNumber: profile.phoneNumber ?? "",
+    location: { ...defaultAddress, ...profile.location },
+    notificationPreferences: {
+      ...defaultNotificationPreferences,
+      ...profile.notificationPreferences,
+    },
+    languagePreference: profile.languagePreference ?? "English",
+  };
+}
+
+const activityOptions: { value: UserActivity; label: string; description: string }[] = [
   { value: "seller", label: "Seller", description: "List PET bottles and manage collections." },
   { value: "buyer", label: "Buyer", description: "Find PET bottles and manage purchases." },
 ];
 
-function formatDate(value: Date | null) {
-  if (!value || Number.isNaN(new Date(value).getTime())) return "Not available";
+function formatDate(value?: FirestoreTimestamp) {
+  if (!value || !Number.isFinite(value.seconds)) return "Not available";
   return new Intl.DateTimeFormat("en-ZA", {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(new Date(value.seconds * 1000));
 }
 
-export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Props) {
-  const [form, setForm] = useState<ProfileSettingsData>(profile);
+export default function ProfileSettings({ profile, onSave, onPhotoSelected, onEmailChange }: Props) {
+  const [form, setForm] = useState<ProfileForm>(() => toForm(profile));
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -40,7 +83,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
   const temporaryPhotoUrl = useRef("");
 
   useEffect(() => {
-    setForm(profile);
+    setForm(toForm(profile));
     setPhotoPreview(profile.profileImageUrl || "");
     setSelectedPhoto(null);
   }, [profile]);
@@ -54,11 +97,16 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
     setMessageType(type);
   };
 
-  const update = <K extends keyof ProfileSettingsData,>(key: K, value: ProfileSettingsData[K]) =>
+  const update = <K extends keyof ProfileForm,>(key: K, value: ProfileForm[K]) =>
     setForm(current => ({ ...current, [key]: value }));
 
-  const updateLocation = (key: keyof ProfileSettingsData["location"], value: string) =>
-    setForm(current => ({ ...current, location: { ...current.location, [key]: value } }));
+  const updateLocation = (
+    key: "streetAddress" | "suburb" | "postalCode" | "city" | "province" | "country",
+    value: string,
+  ) => setForm(current => ({
+    ...current,
+    location: { ...current.location, [key]: value },
+  }));
 
   const updateNotification = (key: keyof NotificationPreferences, value: boolean) =>
     setForm(current => ({
@@ -66,7 +114,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
       notificationPreferences: { ...current.notificationPreferences, [key]: value },
     }));
 
-  const toggleActivity = (activity: Activity) =>
+  const toggleActivity = (activity: UserActivity) =>
     setForm(current => ({
       ...current,
       enabledActivities: current.enabledActivities.includes(activity)
@@ -113,7 +161,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
       return;
     }
 
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       showMessage("Enter a valid email address.", "error");
       return;
     }
@@ -123,8 +171,8 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
       return;
     }
 
-    if (form.enabledActivities.length === 0) {
-      showMessage("Enable at least one WasteLink activity before saving.", "error");
+    if (!isValidEnabledActivities(form.enabledActivities)) {
+      showMessage("Select Seller, Buyer, or both before saving.", "error");
       return;
     }
 
@@ -138,10 +186,11 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
         if (savedPhotoUrl) profileImageUrl = savedPhotoUrl;
       }
 
+      const emailChanged = form.email.trim().toLowerCase() !== profile.email.trim().toLowerCase();
+      if (emailChanged) await onEmailChange(form.email.trim());
+
       await onSave({
         fullName: form.fullName.trim(),
-        email: form.email.trim(),
-        emailVerified: form.email.trim() === profile.email ? profile.emailVerified : false,
         phoneNumber: form.phoneNumber.trim(),
         location: form.location,
         enabledActivities: form.enabledActivities,
@@ -154,7 +203,12 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
       temporaryPhotoUrl.current = "";
       setSelectedPhoto(null);
       setEditing(false);
-      showMessage("Your WasteLink profile has been saved on this device.", "success");
+      showMessage(
+        emailChanged
+          ? "Your profile was saved. Check your new email address for a Firebase verification link; your sign-in email changes only after confirmation."
+          : "Your WasteLink profile has been saved to your account.",
+        "success",
+      );
     } catch (error) {
       showMessage(
         error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
@@ -249,7 +303,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
               <label className="profile-field">
                 <span>Email address</span>
                 <div className="input-with-icon"><Mail size={16} /><input type="email" value={form.email} disabled={!editing} maxLength={254} autoComplete="email" placeholder="name@example.com" onChange={event => update("email", event.target.value)} /></div>
-                <small>Update the email address shown on your WasteLink profile. This local demo does not change your sign-in credentials or verify a new address.</small>
+                <small>A verification link will be sent to a new address. Your sign-in email changes only after you confirm it.</small>
               </label>
               <label className="profile-field">
                 <span>Phone number</span>
@@ -327,7 +381,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected }: Pr
                 <ChevronDown size={16} />
               </div>
             </label>
-            <p className="language-note">Your preference is saved to this device. Translating the full application requires language support to be configured separately.</p>
+            <p className="language-note">Your preference is saved to your WasteLink profile. Full application translation requires language resources to be configured separately.</p>
           </section>
 
           <section className="profile-card">
