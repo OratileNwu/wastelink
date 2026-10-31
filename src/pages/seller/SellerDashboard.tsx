@@ -1,289 +1,164 @@
-import { useMemo, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
-  ArrowRight,
-  ArrowUpRight,
-  BadgeCheck,
-  CalendarDays,
-  ChevronRight,
-  CircleDollarSign,
-  Clock3,
-  Handshake,
-  LayoutDashboard,
-  Leaf,
-  MapPin,
-  Package,
-  PackageOpen,
-  Plus,
-  Recycle,
-  Search,
-  ShieldCheck,
-  TrendingUp,
-  Truck,
-  Wallet,
-  X,
-  type LucideIcon,
+  ArrowRight, Bell, Box, CalendarDays, Check, ChevronDown, ChevronRight,
+  ClipboardList, Clock, Handshake, LayoutGrid, Leaf, MapPin,
+  Package, PackageOpen, Plus, Recycle, Search, Settings, ShieldCheck,
+  Truck, Users, Wallet, type LucideIcon,
 } from 'lucide-react'
-import type { ListingStatus, Offer, SellerListing, Transaction } from '../../types'
+import type { ListingMatch, ListingStatus, Offer, SellerListing, Transaction, UserNotification } from '../../types'
 import './SellerDashboard.css'
 
-type Section = 'overview' | 'listings' | 'offers' | 'sales'
-type SellerDashboardProps = {
+type Page = 'overview' | 'materials' | 'matches' | 'groups' | 'collections' | 'transactions' | 'notifications' | 'profile'
+type Props = {
   sellerId: string
+  sellerName?: string
   listings: SellerListing[]
   offers: Offer[]
   transactions: Transaction[]
+  matches?: ListingMatch[]
+  notifications?: UserNotification[]
   loading?: boolean
   error?: string | null
   onCreateListing?: () => void
-  onViewListings?: () => void
-  onViewOffers?: () => void
-  onViewTransactions?: () => void
   onOpenListing?: (listingId: string) => void
   onRetry?: () => void
+  createContent?: ReactNode
+  onCloseCreate?: () => void
 }
-
-const money = (value: number) =>
-  new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 2 }).format(value)
-
-const kg = (value: number) =>
-  new Intl.NumberFormat('en-ZA', { maximumFractionDigits: 2 }).format(value)
-
-function dateLabel(seconds?: number) {
-  if (!seconds || !Number.isFinite(seconds)) return 'Recently added'
-  return new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(seconds * 1000))
-}
-
-const friendly = (status: string) => status.replaceAll('_', ' ')
-
-const menu: Array<{ id: Section; label: string; icon: LucideIcon }> = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'listings', label: 'My listings', icon: Package },
-  { id: 'offers', label: 'Buyer offers', icon: Handshake },
-  { id: 'sales', label: 'Sales & collection', icon: Truck },
+const cash = (n: number) => new Intl.NumberFormat('en-ZA',{style:'currency',currency:'ZAR'}).format(n)
+const weight = (n: number) => new Intl.NumberFormat('en-ZA',{maximumFractionDigits:2}).format(n)
+const human = (s: string) => s.replaceAll('_',' ')
+const when = (seconds?:number) => seconds ? new Intl.DateTimeFormat('en-ZA',{day:'numeric',month:'short',year:'numeric'}).format(new Date(seconds*1000)) : 'Date pending'
+const nav: {id:Page;label:string;icon:LucideIcon}[] = [
+  {id:'overview',label:'Overview',icon:LayoutGrid},
+  {id:'materials',label:'My materials',icon:Box},
+  {id:'matches',label:'Buyer matches',icon:Handshake},
+  {id:'groups',label:'Group collections',icon:Users},
+  {id:'collections',label:'Collections',icon:Truck},
+  {id:'transactions',label:'Transactions',icon:ClipboardList},
+  {id:'notifications',label:'Notifications',icon:Bell},
+  {id:'profile',label:'Profile & settings',icon:Settings},
 ]
-
-function BlankState({
-  icon: Icon,
-  title,
-  message,
-  action,
-  onAction,
-}: {
-  icon: LucideIcon
-  title: string
-  message: string
-  action?: string
-  onAction?: () => void
-}) {
-  return (
-    <div className="sd-empty">
-      <div className="sd-empty__icon"><Icon size={25} aria-hidden="true" /></div>
-      <h3>{title}</h3>
-      <p>{message}</p>
-      {action && onAction && <button className="sd-empty__action" type="button" onClick={onAction}>{action}<ArrowRight size={15} /></button>}
-    </div>
-  )
+function Empty({icon:Icon,title,detail,button,onClick}:{icon:LucideIcon;title:string;detail:string;button?:string;onClick?:()=>void}){
+  return <div className="wl-empty"><span className="wl-empty-icon"><Icon size={23}/></span><strong>{title}</strong><p>{detail}</p>{button&&onClick&&<button type="button" onClick={onClick}>{button} <ArrowRight size={14}/></button>}</div>
 }
-
 export default function SellerDashboard({
-  sellerId,
-  listings,
-  offers,
-  transactions,
-  loading = false,
-  error = null,
-  onCreateListing,
-  onViewListings,
-  onViewOffers,
-  onViewTransactions,
-  onOpenListing,
-  onRetry,
-}: SellerDashboardProps) {
-  const [section, setSection] = useState<Section>('overview')
-  const [queryText, setQueryText] = useState('')
-  const [statusFilter, setStatusFilter] = useState<ListingStatus | 'all'>('all')
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
-
-  const ownListings = useMemo(
-    () => listings.filter((listing) => listing.sellerId === sellerId)
-      .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)),
-    [listings, sellerId],
+  sellerId,sellerName,listings,offers,transactions,matches=[],notifications=[],
+  loading=false,error=null,onCreateListing,onOpenListing,onRetry,createContent,onCloseCreate,
+}:Props){
+  const [page,setPage]=useState<Page>('overview')
+  const [search,setSearch]=useState('')
+  const [status,setStatus]=useState<ListingStatus|'all'>('all')
+  const [expanded,setExpanded]=useState<string|null>(null)
+  const [profileOpen,setProfileOpen]=useState(false)
+  const mine=listings.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
+  const myOffers=offers.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
+  const mySales=transactions.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
+  const myMatches=matches.filter(m=>mine.some(l=>l.listingId===m.listingId))
+  const myNotices=notifications.filter(n=>n.recipientId===sellerId)
+  const currentOffer=myOffers.filter(x=>x.offerStatus==='pending')
+  const scheduled=mySales.filter(x=>['collection_scheduled','in_progress','awaiting_weighing'].includes(x.transactionStatus))
+  const completed=mySales.filter(x=>x.transactionStatus==='completed')
+  const paid=completed.filter(x=>x.paymentStatus==='paid'&&typeof x.verifiedWeightKg==='number'&&Number.isFinite(x.verifiedWeightKg)&&x.verifiedWeightKg>=0&&Number.isFinite(x.agreedPricePerKg)&&x.agreedPricePerKg>=0)
+  const paidKg=paid.reduce((sum,x)=>sum+x.verifiedWeightKg!,0)
+  const paidValue=paid.reduce((sum,x)=>sum+x.verifiedWeightKg!*x.agreedPricePerKg,0)
+  const active=mine.filter(x=>x.listingStatus==='active').length
+  const filtered=mine.filter(x=>(status==='all'||x.listingStatus===status)&&[x.listingTitle,x.quantityDescription,x.collectionAddress?.city,x.collectionAddress?.suburb].some(s=>(s??'').toLowerCase().includes(search.toLowerCase())))
+  const name=sellerName?.trim()||'Seller'
+  const firstName=sellerName?.trim().split(/\s+/)[0]
+  const initials=name.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()
+  const greeting = new Date().getHours()<12?'Good morning':new Date().getHours()<17?'Good afternoon':'Good evening'
+  const calendarDate=new Intl.DateTimeFormat('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date())
+  const listingName=(id:string)=>mine.find(x=>x.listingId===id)?.listingTitle||'PET bottles'
+  const opening = page==='overview'?'Overview':nav.find(x=>x.id===page)?.label||'Overview'
+  function go(target:Page){setPage(target);setExpanded(null);setProfileOpen(false);onCloseCreate?.()}
+  function openListing(id:string){if(onOpenListing){onOpenListing(id);return}setExpanded(id);go('materials');setExpanded(id)}
+  const listingRow=(l:SellerListing)=>(
+    <li className="wl-material-row" key={l.listingId}>
+      <div className="wl-material-photo">{l.imageUrls?.[0]?<img src={l.imageUrls[0]} alt="" loading="lazy"/>:<Recycle size={22}/>}</div>
+      <div className="wl-material-name"><strong>{l.listingTitle}</strong><small>PET bottles · {l.collectionAddress?.suburb||l.collectionAddress?.city||'Location pending'}</small></div>
+      <div className="wl-material-weight"><strong>{l.estimatedWeightKg===undefined?'Weight unknown':`${weight(l.estimatedWeightKg)} kg`}</strong><small>{l.quantityDescription}</small></div>
+      <span className="wl-pill" data-kind={l.listingStatus}>{human(l.listingStatus)}</span>
+      <button className="wl-arrow" type="button" aria-label={`View ${l.listingTitle}`} onClick={()=>openListing(l.listingId)}><ChevronRight size={19}/></button>
+    </li>
   )
-  const ownOffers = useMemo(
-    () => offers.filter((offer) => offer.sellerId === sellerId)
-      .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)),
-    [offers, sellerId],
+  const recordCard=(t:Transaction)=>(
+    <li className="wl-record" key={t.transactionId}>
+      <span className="wl-record-icon"><Truck size={18}/></span>
+      <div><strong>{listingName(t.listingId)}</strong><small>{human(t.selectedCollectionMethod)} · {t.verifiedWeightKg===undefined?'Weight pending':`${weight(t.verifiedWeightKg)} kg verified`}</small></div>
+      <div className="wl-record-right"><strong>{t.verifiedWeightKg===undefined?'Final price pending':cash(t.verifiedWeightKg*t.agreedPricePerKg)}</strong><span className="wl-pill" data-kind={t.transactionStatus}>{human(t.transactionStatus)}</span></div>
+    </li>
   )
-  const ownSales = useMemo(
-    () => transactions.filter((sale) => sale.sellerId === sellerId)
-      .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)),
-    [transactions, sellerId],
-  )
-  const active = ownListings.filter((item) => item.listingStatus === 'active').length
-  const pendingOffers = ownOffers.filter((item) => item.offerStatus === 'pending').length
-  const completed = ownSales.filter((item) => item.transactionStatus === 'completed').length
-  // Only count paid, completed sales with verified weight; delivery fees are excluded.
-  const paidSales = ownSales.filter((item) =>
-    item.transactionStatus === 'completed' &&
-    item.paymentStatus === 'paid' &&
-    typeof item.verifiedWeightKg === 'number' &&
-    Number.isFinite(item.verifiedWeightKg) &&
-    item.verifiedWeightKg >= 0 &&
-    Number.isFinite(item.agreedPricePerKg) &&
-    item.agreedPricePerKg >= 0,
-  )
-  const earnings = paidSales.reduce((sum, item) => sum + item.verifiedWeightKg! * item.agreedPricePerKg, 0)
-  const verifiedKg = paidSales.reduce((sum, item) => sum + item.verifiedWeightKg!, 0)
-
-  const filteredListings = ownListings.filter((item) => {
-    const search = queryText.trim().toLowerCase()
-    const matchesText = !search || [item.listingTitle, item.quantityDescription, item.collectionAddress.city]
-      .some((text) => text?.toLowerCase().includes(search))
-    return matchesText && (statusFilter === 'all' || item.listingStatus === statusFilter)
-  })
-  const selectedListing = ownListings.find((item) => item.listingId === selectedListingId)
-  const byListingId = new Map(ownListings.map((item) => [item.listingId, item]))
-
-  function navigate(destination: Section) {
-    setSelectedListingId(null)
-    if (destination === 'listings' && onViewListings) return onViewListings()
-    if (destination === 'offers' && onViewOffers) return onViewOffers()
-    if (destination === 'sales' && onViewTransactions) return onViewTransactions()
-    setSection(destination)
-  }
-
-  function openDetails(id: string) {
-    if (onOpenListing) return onOpenListing(id)
-    setSection('listings')
-    setStatusFilter('all')
-    setQueryText('')
-    setSelectedListingId(id)
-  }
-
-  function listingRow(item: SellerListing) {
-    return (
-      <li className="sd-listing" key={item.listingId}>
-        <div className="sd-listing__thumbnail">
-          {item.imageUrls?.[0]
-            ? <img src={item.imageUrls[0]} alt="" loading="lazy" />
-            : <Recycle size={23} aria-hidden="true" />}
+  return <div className="wl-app">
+    <aside className="wl-sidebar">
+      <div className="wl-brand"><span><Leaf size={20}/></span><strong>Waste<b>Link</b></strong></div>
+      <div className="wl-nav-title">WORKSPACE</div>
+      <nav aria-label="Seller pages" className="wl-nav">
+        {nav.slice(0,6).map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>go(id)} className={page===id&&!createContent?'active':''}><Icon size={17}/><span>{label}</span>{id==='matches'&&myMatches.length>0&&<em>{myMatches.length}</em>}</button>)}
+      </nav>
+      <div className="wl-nav-title wl-nav-title--account">ACCOUNT</div>
+      <nav aria-label="Account pages" className="wl-nav">
+        {nav.slice(6).map(({id,label,icon:Icon})=><button key={id} type="button" className={page===id&&!createContent?'active':''} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span>{id==='notifications'&&myNotices.filter(n=>!n.isRead).length>0&&<em>{myNotices.filter(n=>!n.isRead).length}</em>}</button>)}
+      </nav>
+      <div className="wl-sidebar-bottom"><div className="wl-impact"><div><Leaf size={15}/> Your verified impact</div><strong>{weight(paidKg)} kg</strong><small>Recorded paid PET sales</small></div><small>WasteLink · Seller workspace</small></div>
+    </aside>
+    <div className="wl-right">
+      <header className="wl-top">
+        <label className="wl-search"><Search size={17}/><input aria-label="Search material listings" placeholder="Search your materials..." value={search} onChange={e=>{setSearch(e.target.value);if(e.target.value){setPage('materials');onCloseCreate?.()}}}/></label>
+        <div className="wl-account">
+          <div className="wl-role">Viewing as <strong>Supplier</strong></div>
+          <span className="wl-divider"/>
+          <button className="wl-notification" type="button" aria-label="View notifications" onClick={()=>go('notifications')}><Bell size={18}/>{myNotices.filter(n=>!n.isRead).length>0&&<em>{myNotices.filter(n=>!n.isRead).length}</em>}</button>
+          <button className="wl-user" type="button" onClick={()=>setProfileOpen(!profileOpen)} aria-expanded={profileOpen}><span className="wl-avatar">{initials}</span><span><strong>{name}</strong><small>Supplier</small></span><ChevronDown size={13}/></button>
+          {profileOpen&&<div className="wl-user-menu"><button type="button" onClick={()=>go('profile')}>Profile & settings</button><button type="button" onClick={()=>go('notifications')}>Notifications</button></div>}
         </div>
-        <div className="sd-listing__main">
-          <strong>{item.listingTitle}</strong>
-          <span><MapPin size={13} aria-hidden="true" /> {item.collectionAddress?.city || 'Location unavailable'} <span className="sd-dot">·</span> {item.estimatedWeightKg === undefined ? 'Weight unknown' : `Est. ${kg(item.estimatedWeightKg)} kg`}</span>
-          <small>{dateLabel(item.createdAt?.seconds)}</small>
-        </div>
-        <span className="sd-status" data-status={item.listingStatus}>{friendly(item.listingStatus)}</span>
-        <button type="button" className="sd-icon-button sd-listing__open" onClick={() => openDetails(item.listingId)} aria-label={`View ${item.listingTitle} details`}>
-          <ChevronRight size={19} aria-hidden="true" />
-        </button>
-      </li>
-    )
-  }
-
-  return (
-    <div className="sd-shell">
-      <aside className="sd-sidebar" aria-label="Seller navigation">
-        <div className="sd-brand"><span className="sd-brand__mark"><Recycle size={24} strokeWidth={2.4} /></span><span><strong>WasteLink</strong><small>SELLER PORTAL</small></span></div>
-        <div className="sd-sidebar__caption">WORKSPACE</div>
-        <nav className="sd-nav" aria-label="Seller pages">
-          {menu.map(({ id, label, icon: Icon }) => (
-            <button className={section === id ? 'sd-nav__item is-active' : 'sd-nav__item'} type="button" key={id} onClick={() => navigate(id)} aria-current={section === id ? 'page' : undefined}>
-              <Icon size={19} aria-hidden="true" /><span>{label}</span>
-              {id === 'offers' && pendingOffers > 0 && <em>{pendingOffers}</em>}
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <div className="sd-sidebar__note"><Leaf size={24} /><strong>Every bottle matters.</strong><p>Keep PET out of waste streams and connected to real buyers.</p></div>
-          <div className="sd-sidebar__footer"><ShieldCheck size={16} /> Seller workspace</div>
-        </div>
-      </aside>
-
-      <div className="sd-content">
-        <div className="sd-topbar">
-          <div className="sd-breadcrumb">Workspace <ChevronRight size={14} /> <strong>{menu.find((item) => item.id === section)?.label}</strong></div>
-          <div className="sd-topbar__right"><span className="sd-online-dot" /> PET marketplace <span className="sd-topbar__avatar" aria-label="Seller profile">S</span></div>
-        </div>
-
-        <main className="sd-main">
-          <div className="sd-page-title">
-            <div>
-              <div className="sd-overline"><span /> SELLER WORKSPACE</div>
-              <h1>{section === 'overview' ? 'Welcome to your dashboard' : menu.find((item) => item.id === section)?.label}</h1>
-              <p>{section === 'overview' ? 'Your listings, offers and sales — all in one place.' : section === 'listings' ? 'Search, review and manage your PET bottle listings.' : section === 'offers' ? 'Track offers submitted by potential buyers.' : 'Follow your agreed PET sales and collection progress.'}</p>
-            </div>
-            <button className="sd-primary" type="button" onClick={onCreateListing} disabled={!onCreateListing}><Plus size={18} /> Create listing</button>
-          </div>
-
-          {error && <div className="sd-error" role="alert"><span>{error}</span>{onRetry && <button type="button" onClick={onRetry}>Retry</button>}</div>}
-          {loading ? <div className="sd-loading" role="status"><span className="sd-spinner" /> Loading your workspace…</div> : error ? null : (
-            <>
-              {section === 'overview' && (
-                <>
-                  <section className="sd-hero">
-                    <div className="sd-hero__content">
-                      <span className="sd-hero__label"><Leaf size={14} /> YOUR CIRCULAR JOURNEY</span>
-                      <h2>Give your PET bottles<br />a second life.</h2>
-                      <p>List what you've collected, find interested buyers and track every sale from one dashboard.</p>
-                      <button type="button" onClick={onCreateListing} disabled={!onCreateListing}>List recyclable PET <ArrowUpRight size={17}/></button>
-                    </div>
-                    <div className="sd-hero__illustration" aria-hidden="true"><div className="sd-hero__orb"><Recycle size={96} strokeWidth={1.2} /></div><span className="sd-hero__spark sd-hero__spark--one"><Leaf size={20}/></span><span className="sd-hero__spark sd-hero__spark--two"><BadgeCheck size={21}/></span></div>
+      </header>
+      <main className="wl-main">
+        {createContent ? createContent : <>
+          <div className="wl-intro"><div><p className="wl-date">{calendarDate}</p><h1>{page==='overview'? `${greeting}${firstName?`, ${firstName}`:''}`:opening}</h1><p>{page==='overview'?"Here's what's happening with your recyclable materials today.":page==='materials'?'All your recyclable PET listings in one place.':page==='matches'?'Buyer compatibility records for your materials.':page==='groups'?'See whether your small quantities can be combined for pickup.':page==='collections'?'Follow the status of arranged pickups.':page==='transactions'?'Track confirmed transactions and payments.':page==='notifications'?'Updates associated with your seller account.':'Your account information and preferences.'}</p></div>{!['profile','notifications'].includes(page)&&<button type="button" className="wl-btn" disabled={!onCreateListing} onClick={onCreateListing}><Plus size={17}/> List recyclable material</button>}</div>
+          {error&&<div className="wl-error" role="alert">{error} {onRetry&&<button type="button" onClick={onRetry}>Try again</button>}</div>}
+          {loading?<div className="wl-loading" role="status">Loading seller records…</div>:error?null:<>
+            {page==='overview'&&<>
+              <section className="wl-kpis" aria-label="Seller dashboard summary">
+                {[
+                  {label:'Active listings',value:String(active),detail:'PET listings available',icon:Box,tone:'green'},
+                  {label:'Buyer matches',value:String(myMatches.filter(x=>x.matchStatus==='compatible').length),detail:'Compatible matches',icon:Handshake,tone:'mint'},
+                  {label:'Pending offers',value:String(currentOffer.length),detail:'Awaiting your response',icon:ClipboardList,tone:'yellow'},
+                  {label:'Completed',value:String(completed.length),detail:'Transactions',icon:Check,tone:'blue'},
+                  {label:'Verified PET sold',value:weight(paidKg)+' kg',detail:'Paid completed sales',icon:Leaf,tone:'green'},
+                ].map(({label,value,detail,icon:Icon,tone})=><article className="wl-kpi" key={label}><div><span className={`wl-icon wl-icon--${tone}`}><Icon size={19}/></span><span className="wl-kpi-label">{label}</span></div><strong>{value}</strong><small>{detail}</small></article>)}
+              </section>
+              <div className="wl-columns">
+                <div className="wl-stack">
+                  <section className="wl-card"><div className="wl-card-heading"><div><h2>Recent material listings</h2><p>Your latest recyclable material activity</p></div><button type="button" onClick={()=>go('materials')}>View all <ArrowRight size={14}/></button></div>
+                    {mine.length?<ul className="wl-material-list">{mine.slice(0,3).map(listingRow)}</ul>:<Empty icon={PackageOpen} title="No materials listed yet" detail="List your PET bottles to start connecting with buyers." button="Create your first listing" onClick={onCreateListing}/>}
                   </section>
-
-                  <section className="sd-stats" aria-label="Seller performance">
-                    <article className="sd-stat"><div className="sd-stat__top"><span>Active listings</span><span className="sd-stat__icon green"><Package size={20}/></span></div><strong>{active}</strong><small>Available PET bottle listings</small></article>
-                    <article className="sd-stat"><div className="sd-stat__top"><span>Pending offers</span><span className="sd-stat__icon orange"><Handshake size={20}/></span></div><strong>{pendingOffers}</strong><small>Offers awaiting your response</small></article>
-                    <article className="sd-stat"><div className="sd-stat__top"><span>Completed sales</span><span className="sd-stat__icon blue"><BadgeCheck size={20}/></span></div><strong>{completed}</strong><small>Recorded completed sales</small></article>
-                    <article className="sd-stat"><div className="sd-stat__top"><span>Confirmed earnings</span><span className="sd-stat__icon purple"><Wallet size={20}/></span></div><strong>{money(earnings)}</strong><small>Paid PET material sales only</small></article>
+                  <section className="wl-card"><div className="wl-card-heading"><div><h2>Incoming offers</h2><p>Respond to buyers interested in your materials</p></div><span className="wl-mini-pill">{currentOffer.length} pending</span></div>
+                    {currentOffer.length?<ul className="wl-offer-list">{currentOffer.slice(0,3).map(o=><li key={o.offerId}><span className="wl-buyer-mark"><Handshake size={17}/></span><div><strong>Offer for {listingName(o.listingId)}</strong><small>{o.proposedWeightKg===undefined?'Weight to be verified':`${weight(o.proposedWeightKg)} kg proposed`}</small></div><strong>{cash(o.offeredPricePerKg)}/kg</strong><button type="button" onClick={()=>go('matches')}>View</button></li>)}</ul>:<Empty icon={Handshake} title="No incoming offers" detail="Offers will appear when a buyer is interested in your materials."/>}
                   </section>
-
-                  <div className="sd-grid">
-                    <section className="sd-panel" aria-labelledby="sd-recent-title">
-                      <div className="sd-panel__heading"><div><div className="sd-panel__overline">YOUR MATERIALS</div><h2 id="sd-recent-title">Recent listings</h2></div><button type="button" className="sd-text-button" onClick={() => navigate('listings')}>View all <ArrowRight size={15}/></button></div>
-                      {ownListings.length ? <ul className="sd-listings">{ownListings.slice(0, 4).map(listingRow)}</ul> : <BlankState icon={PackageOpen} title="Your listings start here" message="Add your PET bottles to let buyers know what's available. A weight estimate isn't required." action="Create first listing" onAction={onCreateListing} />}
-                    </section>
-                    <div className="sd-aside-stack">
-                      <section className="sd-panel sd-panel--offers" aria-labelledby="sd-offers-title">
-                        <div className="sd-panel__heading"><div><div className="sd-panel__overline">OPPORTUNITIES</div><h2 id="sd-offers-title">Buyer offers</h2></div><span className="sd-count">{pendingOffers} pending</span></div>
-                        {ownOffers.length ? <div className="sd-offer-preview">{ownOffers.slice(0, 2).map((offer) => <div key={offer.offerId} className="sd-offer-preview__item"><div><strong>{byListingId.get(offer.listingId)?.listingTitle || 'PET bottle offer'}</strong><span>{money(offer.offeredPricePerKg)} / kg · {friendly(offer.offerStatus)}</span></div><Handshake size={18}/></div>)}<button type="button" className="sd-text-button" onClick={() => navigate('offers')}>All offers <ArrowRight size={15}/></button></div> : <BlankState icon={Handshake} title="No buyer offers yet" message="Offers will appear here when buyers express interest in your PET." />}
-                      </section>
-                      <section className="sd-mini-impact"><div className="sd-mini-impact__icon"><TrendingUp size={22}/></div><div><span>Verified PET sold</span><strong>{kg(verifiedKg)} kg</strong><small>From paid, completed sales</small></div><Leaf size={40} className="sd-mini-impact__leaf" aria-hidden="true"/></section>
-                    </div>
-                  </div>
-                  <div className="sd-tip"><div className="sd-tip__icon"><CircleDollarSign size={21}/></div><div><strong>Not sure how much your bottles weigh?</strong><span>You can list them without a weight. Your final price is based on the accepted verified weight and agreed buyer rate.</span></div><button type="button" onClick={onCreateListing} disabled={!onCreateListing}>Get started <ArrowRight size={16}/></button></div>
-                </>
-              )}
-
-              {section === 'listings' && (
-                <section className="sd-panel sd-panel--full" aria-labelledby="sd-all-listings">
-                  <div className="sd-panel__heading"><div><div className="sd-panel__overline">SELLER INVENTORY</div><h2 id="sd-all-listings">My listings <span className="sd-title-count">{ownListings.length}</span></h2></div></div>
-                  <div className="sd-filters">
-                    <label className="sd-search"><Search size={18} /><span className="sd-sr-only">Search listings</span><input value={queryText} onChange={(event) => setQueryText(event.target.value)} placeholder="Search your PET listings" /></label>
-                    <label className="sd-filter"><span className="sd-sr-only">Filter listings by status</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ListingStatus | 'all')}><option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="reserved">Reserved</option><option value="collected">Collected</option><option value="delivered">Delivered</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
-                  </div>
-                  {filteredListings.length ? <ul className="sd-listings">{filteredListings.map(listingRow)}</ul> : <BlankState icon={PackageOpen} title={ownListings.length ? 'No matching listings' : 'No listings yet'} message={ownListings.length ? 'Try another search term or status filter.' : 'Start by creating your first PET listing.'} action={ownListings.length ? undefined : 'Create listing'} onAction={onCreateListing} />}
-                  {selectedListing && <section className="sd-detail" aria-labelledby="sd-detail-heading">
-                    <div className="sd-detail__heading"><h3 id="sd-detail-heading">{selectedListing.listingTitle}</h3><button type="button" aria-label="Close listing details" onClick={() => setSelectedListingId(null)}><X size={19}/></button></div>
-                    <div className="sd-detail__grid"><div><span>Material</span><strong>PET bottles</strong></div><div><span>Quantity</span><strong>{selectedListing.quantityDescription}</strong></div><div><span>Estimated weight</span><strong>{selectedListing.estimatedWeightKg === undefined ? 'Unknown — to be verified' : `${kg(selectedListing.estimatedWeightKg)} kg (estimate)`}</strong></div><div><span>Collection method</span><strong>{friendly(selectedListing.collectionMethod)}</strong></div><div><span>Condition</span><strong>{friendly(selectedListing.bottleCondition)}</strong></div><div><span>Colour</span><strong>{friendly(selectedListing.bottleColour)}</strong></div></div>
-                    {selectedListing.description && <p>{selectedListing.description}</p>}
-                  </section>}
-                </section>
-              )}
-
-              {section === 'offers' && <section className="sd-panel sd-panel--full" aria-labelledby="sd-all-offers"><div className="sd-panel__heading"><div><div className="sd-panel__overline">BUYER INTEREST</div><h2 id="sd-all-offers">Offers received <span className="sd-title-count">{ownOffers.length}</span></h2></div></div>
-                {ownOffers.length ? <ul className="sd-records">{ownOffers.map((offer) => <li key={offer.offerId}><div className="sd-records__icon"><Handshake size={21}/></div><div className="sd-records__content"><strong>{byListingId.get(offer.listingId)?.listingTitle || 'PET bottle listing'}</strong><span>{offer.proposedWeightKg === undefined ? 'Weight to be verified' : `Proposed ${kg(offer.proposedWeightKg)} kg`} · {friendly(offer.selectedCollectionMethod)}</span><small>{dateLabel(offer.createdAt?.seconds)}</small></div><div className="sd-records__value"><strong>{money(offer.offeredPricePerKg)} / kg</strong><span className="sd-status" data-status={offer.offerStatus}>{friendly(offer.offerStatus)}</span></div></li>)}</ul> : <BlankState icon={Handshake} title="No offers received" message="Once buyers make offers on your listings, you can review them here." />}
-              </section>}
-
-              {section === 'sales' && <section className="sd-panel sd-panel--full" aria-labelledby="sd-all-sales"><div className="sd-panel__heading"><div><div className="sd-panel__overline">TRANSACTION HISTORY</div><h2 id="sd-all-sales">Sales & collection <span className="sd-title-count">{ownSales.length}</span></h2></div></div>
-                {ownSales.length ? <ul className="sd-records">{ownSales.map((sale) => <li key={sale.transactionId}><div className="sd-records__icon"><Truck size={21}/></div><div className="sd-records__content"><strong>{byListingId.get(sale.listingId)?.listingTitle || 'PET bottle sale'}</strong><span>{sale.verifiedWeightKg === undefined ? 'Awaiting verified weight' : `${kg(sale.verifiedWeightKg)} kg verified`} · {friendly(sale.selectedCollectionMethod)}</span><small>{dateLabel(sale.createdAt?.seconds)}</small></div><div className="sd-records__value"><strong>{sale.verifiedWeightKg === undefined ? 'Final value pending' : money(sale.verifiedWeightKg * sale.agreedPricePerKg)}</strong><span className="sd-status" data-status={sale.transactionStatus}>{friendly(sale.transactionStatus)}</span><small>Payment: {friendly(sale.paymentStatus)}</small></div></li>)}</ul> : <BlankState icon={CalendarDays} title="No sales recorded yet" message="Sales and collection progress will show here once a buyer and seller agree to transact." />}
-              </section>}
-            </>
-          )}
-
-          <footer className="sd-footer"><span><Recycle size={16}/> WasteLink Seller Workspace</span><span><Clock3 size={14}/> Figures reflect the records provided to this dashboard</span></footer>
-        </main>
-      </div>
+                </div>
+                <div className="wl-stack">
+                  <section className="wl-card wl-match-card"><span className="wl-match-icon"><Handshake size={24}/></span><p className="wl-new-tag">BUYER OPPORTUNITIES</p><h2>{myMatches.filter(x=>x.matchStatus==='compatible').length} compatible buyer matches</h2><p>Your PET listings can be matched against buyer requirements.</p><button type="button" className="wl-btn" onClick={()=>go('matches')}>Explore matches <ArrowRight size={16}/></button></section>
+                  <section className="wl-card"><div className="wl-card-heading"><div><h2>Upcoming collection</h2><p>Confirmed pickups and delivery progress</p></div></div>
+                    {scheduled.length?<ul className="wl-record-list">{scheduled.slice(0,2).map(recordCard)}</ul>:<Empty icon={Truck} title="No collection scheduled" detail="Agreed pickup arrangements will appear here."/>}
+                  </section>
+                  <section className="wl-card"><div className="wl-card-heading"><div><h2>Recent notifications</h2><p>Seller account updates</p></div><button type="button" onClick={()=>go('notifications')}>View all <ArrowRight size={14}/></button></div>{myNotices.length?<ul className="wl-note-list">{myNotices.slice(0,3).map(n=><li key={n.notificationId}><Bell size={15}/><span><strong>{n.title}</strong><small>{n.message}</small></span></li>)}</ul>:<Empty icon={Bell} title="No new notifications" detail="You'll see account updates here when they arrive."/>}</section>
+                </div>
+              </div>
+            </>}
+            {page==='materials'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>My material listings</h2><p>{mine.length} listing{mine.length===1?'':'s'} in your account</p></div><select aria-label="Filter listing status" value={status} onChange={e=>setStatus(e.target.value as ListingStatus|'all')}><option value="all">All statuses</option>{(['active','draft','reserved','collected','delivered','completed','cancelled'] as ListingStatus[]).map(s=><option key={s} value={s}>{human(s)}</option>)}</select></div>
+              {filtered.length?<ul className="wl-material-list">{filtered.map(listingRow)}</ul>:<Empty icon={Package} title={mine.length?'No matching materials':'Your materials will appear here'} detail={mine.length?'Change your search or status filter.':'Start by adding PET bottles.'} button={mine.length?undefined:'List material'} onClick={onCreateListing}/>}
+              {expanded&&mine.some(x=>x.listingId===expanded)&&(()=>{const item=mine.find(x=>x.listingId===expanded)!;return <div className="wl-detail"><button type="button" onClick={()=>setExpanded(null)}>Close details</button><h3>{item.listingTitle}</h3><p>{item.description||'No description supplied.'}</p><dl><div><dt>Quantity</dt><dd>{item.quantityDescription}</dd></div><div><dt>Weight</dt><dd>{item.estimatedWeightKg===undefined?'Unknown':`${weight(item.estimatedWeightKg)} kg (estimate)`}</dd></div><div><dt>Condition</dt><dd>{human(item.bottleCondition)}</dd></div><div><dt>Collection</dt><dd>{human(item.collectionMethod)}</dd></div></dl></div>})()}
+            </section>}
+            {page==='matches'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Buyer matches</h2><p>Compatibility is not the same as a confirmed purchase.</p></div></div>{myMatches.length?<ul className="wl-record-list">{myMatches.map((m,i)=><li className="wl-record" key={`${m.listingId}-${m.requirementId}-${i}`}><span className="wl-record-icon"><Handshake size={18}/></span><div><strong>{listingName(m.listingId)}</strong><small>Buyer requirement: {m.requirementId}</small></div><span className="wl-pill" data-kind={m.matchStatus}>{human(m.matchStatus)}</span></li>)}</ul>:<Empty icon={Handshake} title="No buyer matches yet" detail="Compatible buyer requirements will appear here when matching data becomes available."/>}</section>}
+            {page==='groups'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Group collections</h2><p>Combine compatible quantities for fewer pickup trips.</p></div></div><Empty icon={Users} title="Group collection planning" detail="Collection pooling is not connected in this MVP yet. No groups or savings are claimed."/></section>}
+            {page==='collections'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Collections</h2><p>Agreed pickup and delivery activity</p></div></div>{scheduled.length?<ul className="wl-record-list">{scheduled.map(recordCard)}</ul>:<Empty icon={Truck} title="No active collections" detail="Confirmed collection arrangements will appear here."/ >}</section>}
+            {page==='transactions'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Transaction history</h2><p>Material earnings: {cash(paidValue)} from paid completed sales</p></div></div>{mySales.length?<ul className="wl-record-list">{mySales.map(recordCard)}</ul>:<Empty icon={Wallet} title="No transactions yet" detail="Your sales will appear once you and a buyer agree on an offer."/>}</section>}
+            {page==='notifications'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Notifications</h2><p>Updates related to your seller account</p></div></div>{myNotices.length?<ul className="wl-note-list">{myNotices.map(n=><li key={n.notificationId}><Bell size={16}/><span><strong>{n.title}</strong><small>{n.message}</small></span></li>)}</ul>:<Empty icon={Bell} title="All caught up" detail="You have no notifications yet."/>}</section>}
+            {page==='profile'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Seller profile</h2><p>Account management is handled by your team's authentication screens.</p></div></div><div className="wl-profile"><span className="wl-avatar">{initials}</span><div><strong>{name}</strong><small>Supplier account</small></div></div></section>}
+          </>}
+        </>}
+      </main>
     </div>
-  )
+  </div>
 }
