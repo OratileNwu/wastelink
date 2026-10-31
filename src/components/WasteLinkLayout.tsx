@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { UserActivity } from '../types'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, X } from 'lucide-react'
@@ -19,6 +20,8 @@ const buyerItems: NavItem[] = [
   { label: 'Collections', to: '/buyer/collections', icon: Truck },
   { label: 'Transactions', to: '/buyer/transactions', icon: ClipboardList },
 ]
+const supportedActivities: UserActivity[] = ['buyer', 'seller']
+
 const accountItems: NavItem[] = [
   { label: 'Notifications', to: '/notifications', icon: Bell },
   { label: 'Profile & settings', to: '/settings', icon: Settings },
@@ -71,15 +74,15 @@ export function WasteLinkLayout() {
           <input aria-label="Search buying requirements" placeholder="Search buying requirements" value={query} onChange={(e) => setQuery(e.target.value)} />
         </form>
         <div className="wl-topbar-right">
-          <label className="wl-view-selector"><span>Viewing as</span>
+          <label className="wl-view-selector"><span>Workspace preview</span>
             <span className="wl-view-select-wrap">
               <select aria-label="Switch workspace" value={currentView} onChange={(event) => navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value)}>
-                <option value="overall">Overall</option><option value="buyer">Buyer</option><option value="seller">Seller</option>
+                <option value="overall">Overall</option>{supportedActivities.map((activity) => <option key={activity} value={activity}>{activity === 'buyer' ? 'Buyer' : 'Seller'}</option>)}
               </select><ChevronDown size={13} aria-hidden="true" />
             </span>
           </label>
           <Link to="/notifications" className="wl-icon-button" aria-label="Notifications"><Bell size={21} /></Link>
-          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>Your account</strong><small>Profile</small></span><ChevronDown size={15} /></Link>
+          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>Account not connected</strong><small>Preview mode</small></span><ChevronDown size={15} /></Link>
         </div>
       </header>
       <main className="wl-page"><Outlet /></main>

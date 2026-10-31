@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { RequirementsProvider } from './features/buyer/requirements'
 import { WasteLinkLayout } from './components/WasteLinkLayout'
 import {
   OverallDashboard,
@@ -13,8 +12,7 @@ import {
 
 export default function App() {
   return (
-    <RequirementsProvider>
-      <BrowserRouter>
+    <BrowserRouter>
         <Routes>
           <Route element={<WasteLinkLayout />}>
             <Route index element={<OverallDashboard />} />
@@ -22,7 +20,6 @@ export default function App() {
             <Route path="/buyer/materials" element={<IncomingMaterials />} />
             <Route path="/buyer/requirements" element={<BuyingRequirements />} />
             <Route path="/buyer/requirements/new" element={<RequirementForm />} />
-            <Route path="/buyer/requirements/:requirementId/edit" element={<RequirementForm />} />
             <Route path="/buyer/collections" element={<WorkspaceEmptyPage kind="collections" />} />
             <Route path="/buyer/transactions" element={<WorkspaceEmptyPage kind="transactions" />} />
             <Route path="/notifications" element={<WorkspaceEmptyPage kind="notifications" />} />
@@ -35,6 +32,5 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </RequirementsProvider>
   )
 }
