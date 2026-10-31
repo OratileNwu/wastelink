@@ -200,7 +200,7 @@ export default function ProfileSettings({ profile = emptyProfile, onSave, onPhot
             <div className="preference-list">
               {([
                 ["emailNotifications", "Email notifications", "Receive WasteLink updates by email."],
-                ["collectionUpdates", "Collection updates", "Pickup, delivery and collection progress."],
+                ["collectionUpdates", "Collection updates", "Updates about your PET bottle collection activity."],
                 ["transactionUpdates", "Transaction updates", "Changes to transactions and payments."],
                 ["offerNotifications", "Offer notifications", "New offers and negotiation activity."],
               ] as [keyof NotificationPreferences, string, string][]).map(([key, title, description]) => <div className="preference-row" key={key}><div><strong>{title}</strong><p>{description}</p></div><button type="button" role="switch" aria-checked={form.notificationPreferences[key]} aria-label={title} disabled={!editing} className={`toggle-switch ${form.notificationPreferences[key] ? "is-on" : ""}`} onClick={() => updateNotification(key, !form.notificationPreferences[key])}><span /></button></div>)}
