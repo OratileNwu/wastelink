@@ -42,7 +42,6 @@ export default function CreateListing({ onCreate, onCancel }: CreateListingProps
   const [isClean, setIsClean] = useState(false)
   const [collectionMethod, setCollectionMethod] = useState<ListingFulfilmentOption>('BUYER_COLLECTION')
   const [deliveryFee, setDeliveryFee] = useState('')
-  const [street, setStreet] = useState('')
   const [suburb, setSuburb] = useState('')
   const [city, setCity] = useState('')
   const [province, setProvince] = useState('')
@@ -102,7 +101,6 @@ export default function CreateListing({ onCreate, onCancel }: CreateListingProps
       city: city.trim(),
       province: province.trim(),
       country: country.trim(),
-      ...(street.trim() ? { streetAddress: street.trim() } : {}),
       ...(suburb.trim() ? { suburb: suburb.trim() } : {}),
     }
     const listing: CreateListingInput = {
@@ -242,7 +240,7 @@ export default function CreateListing({ onCreate, onCancel }: CreateListingProps
             <div className="seller-create__field"><label htmlFor="listing-province">Province <span aria-hidden="true">*</span></label><input id="listing-province" required value={province} onChange={(e) => setProvince(e.target.value)} placeholder="e.g. North West" /></div>
             <div className="seller-create__field"><label htmlFor="listing-suburb">Suburb (optional)</label><input id="listing-suburb" value={suburb} onChange={(e) => setSuburb(e.target.value)} /></div>
             <div className="seller-create__field"><label htmlFor="listing-country">Country <span aria-hidden="true">*</span></label><input id="listing-country" required value={country} onChange={(e) => setCountry(e.target.value)} /></div>
-            <div className="seller-create__field seller-create__wide"><label htmlFor="listing-street">Collection street address (optional)</label><input id="listing-street" value={street} onChange={(e) => setStreet(e.target.value)} /><small>Share your exact pickup address only with an accepted buyer. Do not display it publicly.</small></div>
+            <p className="seller-create__field seller-create__wide seller-create__hint">For your privacy, the exact street address will be agreed privately after a buyer accepts an offer.</p>
           </div>
         </section>
 
