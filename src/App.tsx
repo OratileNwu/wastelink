@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { WasteLinkLayout } from './components/WasteLinkLayout'
 import ProfileSettingsRoute from './pages/ProfileSettingsRoute'
+import { LoginPage, RegisterPage } from './pages/AuthPages'
 import {
   OverallDashboard,
   BuyerDashboard,
