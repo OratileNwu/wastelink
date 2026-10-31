@@ -122,7 +122,7 @@
 .wl-overall-section-heading h2{font-size:27px;letter-spacing:-.8px;margin-top:9px}
 .wl-overall-section-heading p{font-size:14px;color:#728198;margin-top:8px}
 .wl-destination-grid{display:grid;grid-template-columns:1fr 1fr;gap:19px;margin-top:25px}
-.wl-destination-card{min-height:287px;padding:27px 28px;border:1px solid #dbe8df;border-radius:17px;display:flex;flex-direction:column;align-items:flex-start;transition:transform .2s,box-shadow .2s}
+.wl-destination-card{position:relative;min-height:287px;padding:27px 28px;border:1px solid #dbe8df;border-radius:17px;display:flex;flex-direction:column;align-items:flex-start;transition:transform .2s,box-shadow .2s}
 .wl-destination-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
 .wl-buyer-destination{background:white}.wl-seller-destination{background:#f0faf1}
 .wl-destination-icon{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;background:#e1f9e8;color:#0b713b;margin-bottom:18px}
