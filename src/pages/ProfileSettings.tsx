@@ -125,7 +125,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected, onEm
   const cancelEditing = () => {
     if (temporaryPhotoUrl.current) URL.revokeObjectURL(temporaryPhotoUrl.current);
     temporaryPhotoUrl.current = "";
-    setForm(profile);
+    setForm(toForm(profile));
     setPhotoPreview(profile.profileImageUrl || "");
     setSelectedPhoto(null);
     if (photoInput.current) photoInput.current.value = "";
@@ -136,8 +136,8 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected, onEm
   const handlePhoto = (file?: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      showMessage("Please choose a valid image file.", "error");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      showMessage("Choose a JPEG, PNG or WebP image.", "error");
       if (photoInput.current) photoInput.current.value = "";
       return;
     }
@@ -268,7 +268,7 @@ export default function ProfileSettings({ profile, onSave, onPhotoSelected, onEm
             <input
               ref={photoInput}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
+              accept="image/png,image/jpeg,image/webp"
               hidden
               onChange={event => handlePhoto(event.target.files?.[0])}
             />

@@ -1,4 +1,4 @@
-import { reload, verifyBeforeUpdateEmail, type User } from "firebase/auth";
+import { getIdToken, reload, verifyBeforeUpdateEmail, type User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { isValidEnabledActivities } from "../types";
@@ -39,6 +39,7 @@ export async function requestEmailChange(user: User, newEmail: string): Promise<
 /** Copies a confirmed Firebase Auth email into the matching Firestore user document. */
 export async function syncVerifiedEmail(user: User): Promise<boolean> {
   await reload(user);
+  await getIdToken(user, true);
   if (!user.email || !user.emailVerified) return false;
   const userRef = doc(db, "users", user.uid);
   const snapshot = await getDoc(userRef);

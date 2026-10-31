@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validActivities(activities) {
+      return activities is list
+        && activities.size() >= 1
+        && activities.size() <= 2
+        && activities.hasOnly(['seller', 'buyer']);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll([
+          'uid', 'fullName', 'email', 'enabledActivities', 'accountStatus',
+          'hasCompletedOnboarding', 'emailVerified', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid', 'fullName', 'email', 'phoneNumber', 'profileImageUrl',
+          'enabledActivities', 'location', 'accountStatus',
+          'hasCompletedOnboarding', 'emailVerified', 'phoneVerified',
+          'notificationPreferences', 'languagePreference', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && validActivities(request.resource.data.enabledActivities)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.emailVerified == request.auth.token.email_verified
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.emailVerified == request.auth.token.email_verified
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'fullName', 'email', 'emailVerified', 'phoneNumber', 'profileImageUrl',
+          'enabledActivities', 'location', 'notificationPreferences',
+          'languagePreference', 'updatedAt'
+        ])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['enabledActivities'])
+          || validActivities(request.resource.data.enabledActivities))
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
