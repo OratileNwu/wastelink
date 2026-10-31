@@ -8,6 +8,7 @@ export type AccountStatus =
 export interface Address {
   streetAddress?: string;
   suburb?: string;
+  postalCode?: string;
   city: string;
   province: string;
   country: string;
