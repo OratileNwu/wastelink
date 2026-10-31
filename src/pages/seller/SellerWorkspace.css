@@ -1,0 +1,21 @@
+/* Applied only when the seller workspace is mounted.
+   This counters the Vite starter's centered #root/body styles without editing
+   shared index.css or App.css. */
+body:has(.seller-dashboard),
+body:has(.seller-create) {
+  display: block;
+  margin: 0;
+  min-width: 320px;
+  background: #f6f9f6;
+}
+
+#root:has(.seller-dashboard),
+#root:has(.seller-create) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
