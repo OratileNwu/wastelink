@@ -76,13 +76,26 @@ export async function publishSellerListing(
       imageUrls.push(await getDownloadURL(storageRef))
     }
 
-    const { photos: _photos, ...listing } = input
-    // No street address is stored in the discoverable listing.
-    const { streetAddress: _streetAddress, ...publicAddress } = listing.collectionAddress
+    // Copy only approved Firestore fields: never include browser File objects
+    // or a private street address in the public listing document.
     await setDoc(documentRef, {
-      ...listing,
-      collectionAddress: publicAddress,
-      ...(listing.collectionMethod === 'BUYER_COLLECTION' ? { deliveryFee: 0 } : {}),
+      materialType: input.materialType,
+      listingTitle: input.listingTitle.trim(),
+      description: input.description.trim(),
+      quantityDescription: input.quantityDescription.trim(),
+      bottleCondition: input.bottleCondition,
+      bottleColour: input.bottleColour,
+      isSorted: input.isSorted,
+      isClean: input.isClean,
+      collectionMethod: input.collectionMethod,
+      ...(input.estimatedWeightKg === undefined ? {} : { estimatedWeightKg: input.estimatedWeightKg }),
+      deliveryFee: input.collectionMethod === 'BUYER_COLLECTION' ? 0 : input.deliveryFee,
+      collectionAddress: {
+        city: input.collectionAddress.city.trim(),
+        province: input.collectionAddress.province.trim(),
+        country: input.collectionAddress.country.trim(),
+        ...(input.collectionAddress.suburb ? { suburb: input.collectionAddress.suburb.trim() } : {}),
+      },
       listingId: documentRef.id,
       sellerId: user.uid,
       imageUrls,
