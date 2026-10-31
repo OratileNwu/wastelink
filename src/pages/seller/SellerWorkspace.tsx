@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Offer, SellerListing, Transaction } from '../../types'
 import CreateListing, { type CreateListingInput } from './CreateListing'
 import SellerDashboard from './SellerDashboard'
+import './SellerWorkspace.css'
 
 type SellerWorkspaceProps = {
   sellerId: string
