@@ -60,7 +60,7 @@ export default function ProfileSettings({ profile = emptyProfile, onSave, onPhot
     setPhotoPreview(profile.profileImageUrl || "");
   }, [profile]);
 
-  const update = <K extends keyof ProfileSettingsData>(key: K, value: ProfileSettingsData[K]) =>
+  const update = <K extends keyof ProfileSettingsData,>(key: K, value: ProfileSettingsData[K]) =>
     setForm(current => ({ ...current, [key]: value }));
 
   const updateLocation = (key: keyof ProfileSettingsData["location"], value: string) =>
