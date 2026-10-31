@@ -1,4 +1,4 @@
-export type Activity = "seller" | "buyer" | "transporter";
+export type Activity = "seller" | "buyer";
 
 export type AccountStatus =
   | "active"
