@@ -6,6 +6,19 @@ import { emptyRequirementForm, todayLocal, toRequirementEditableFields, validate
 import type { RequirementEditableFields, RequirementFormValues } from '../features/buyer/requirements'
 import type { BottleColour, BottleCondition, FulfilmentChoice } from '../types'
 
+/** Presentation-only imagery; never used for material listings or user content.
+ * Pexels licensed photography (free for website/app use, attribution appreciated).
+ * https://www.pexels.com/photo/photograph-of-plastic-bottles-on-a-white-surface-8286620/
+ * https://www.pexels.com/photo/a-large-bag-filled-with-plastic-bottles-27666146/
+ * https://www.pexels.com/photo/crop-woman-putting-plastic-bottle-into-bag-7262391/
+ */
+const DASHBOARD_PHOTOS = {
+  hero: 'https://images.pexels.com/photos/8286620/pexels-photo-8286620.jpeg?auto=compress&cs=tinysrgb&w=1500',
+  feature: 'https://images.pexels.com/photos/27666146/pexels-photo-27666146.jpeg?auto=compress&cs=tinysrgb&w=1100',
+  buy: 'https://images.pexels.com/photos/8286620/pexels-photo-8286620.jpeg?auto=compress&cs=tinysrgb&w=1100',
+  sell: 'https://images.pexels.com/photos/7262391/pexels-photo-7262391.jpeg?auto=compress&cs=tinysrgb&w=1100',
+} as const
+
 const BOTTLE_COLOURS: BottleColour[] = ['clear', 'green', 'mixed']
 const BOTTLE_CONDITIONS: BottleCondition[] = ['clean', 'unclean', 'mixed']
 const FULFILMENT_CHOICES: FulfilmentChoice[] = ['BUYER_COLLECTION', 'SELLER_DELIVERY']
@@ -24,14 +37,18 @@ export function OverallDashboard() {
   return <>
     <div className="wl-overall-hero">
       <div className="wl-overall-hero-copy"><span className="wl-overall-pill"><Sparkles size={16} /> THE WASTELINK NETWORK</span><h1>Waste has value.<br /><em>Let's unlock it.</em></h1><p>A smarter way to connect PET plastic bottles with the buyers and sellers who need them. One marketplace. Two sides. Better outcomes.</p><div className="wl-hero-cta"><Link className="btn wl-white-btn" to="/buyer/materials">Explore materials <ArrowRight size={18} /></Link><Link className="btn wl-outline-light" to="/buyer">Open buyer workspace <ChevronRight size={17} /></Link></div></div>
-      <div className="wl-hero-art" aria-hidden="true"><div className="wl-art-orbit orbit-one" /><div className="wl-art-orbit orbit-two" /><div className="wl-art-center"><Recycle size={86} strokeWidth={1.35} /></div><span className="wl-art-chip chip-one"><Package size={19} /> Materials</span><span className="wl-art-chip chip-two"><Handshake size={19} /> Connections</span><span className="wl-art-chip chip-three"><Leaf size={19} /> Impact</span></div>
+      <div className="wl-hero-photo-backdrop" style={{ backgroundImage: `url(${DASHBOARD_PHOTOS.hero})` }} aria-hidden="true" />
+      <div className="wl-hero-photo-frame">
+        <img className="wl-hero-photo-main" src={DASHBOARD_PHOTOS.feature} alt="Collected PET bottles prepared for recycling" />
+        <div className="wl-hero-photo-badge"><Recycle size={21} /><span><strong>One circular marketplace</strong><small>Connect · Trade · Reuse</small></span></div>
+      </div>
     </div>
 
     <div className="wl-overall-main">
       <div className="wl-overall-section-heading"><div><Eyebrow>YOUR WORKSPACES</Eyebrow><h2>Where would you like to start?</h2><p>Move between buying and selling without switching accounts.</p></div></div>
       <div className="wl-destination-grid">
-        <Link to="/buyer" className="wl-destination-card wl-buyer-destination"><span className="wl-destination-icon"><ShoppingBag size={28} /></span><span className="wl-destination-count">01 / BUY</span><h3>Source materials<br />with confidence</h3><p>Explore PET listings, manage buying requirements and track purchasing activity.</p><span className="wl-destination-arrow">Enter buyer workspace <ArrowRight size={19} /></span></Link>
-        <Link to="/seller" className="wl-destination-card wl-seller-destination"><span className="wl-destination-icon"><Recycle size={28} /></span><span className="wl-destination-count">02 / SELL</span><h3>Give PET bottles<br />a second life</h3><p>Connect with buyers who need materials. Seller functionality will be linked with the team's work.</p><span className="wl-destination-arrow">Seller workspace <ArrowRight size={19} /></span></Link>
+        <Link to="/buyer" className="wl-destination-card wl-buyer-destination"><div className="wl-workspace-photo"><img src={DASHBOARD_PHOTOS.buy} alt="Clear recyclable plastic bottles" loading="lazy" /><span className="wl-workspace-photo-label">PET · BUY</span></div><span className="wl-destination-icon"><ShoppingBag size={28} /></span><span className="wl-destination-count">01 / BUY</span><h3>Source materials<br />with confidence</h3><p>Explore PET listings, manage buying requirements and track purchasing activity.</p><span className="wl-destination-arrow">Enter buyer workspace <ArrowRight size={19} /></span></Link>
+        <Link to="/seller" className="wl-destination-card wl-seller-destination"><div className="wl-workspace-photo"><img src={DASHBOARD_PHOTOS.sell} alt="Recyclable plastic bottles being collected" loading="lazy" /><span className="wl-workspace-photo-label">PET · SELL</span></div><span className="wl-destination-icon"><Recycle size={28} /></span><span className="wl-destination-count">02 / SELL</span><h3>Give PET bottles<br />a second life</h3><p>Connect with buyers who need materials. Seller functionality will be linked with the team's work.</p><span className="wl-destination-arrow">Seller workspace <ArrowRight size={19} /></span></Link>
       </div>
       <div className="wl-overall-split">
         <div className="wl-overall-process"><Eyebrow>THE WASTELINK WAY</Eyebrow><h2>A circular marketplace, made simple.</h2><p>From recyclable material to meaningful exchange, the platform keeps buyers and sellers connected.</p><div className="wl-process-items"><div><span>01</span><div><strong>Discover</strong><p>Find available materials or share what you want to buy.</p></div></div><div><span>02</span><div><strong>Connect</strong><p>Agree on requirements and coordinate directly with your counterparty.</p></div></div><div><span>03</span><div><strong>Complete</strong><p>Record purchases and verified material exchanges when services are connected.</p></div></div></div></div>
@@ -43,7 +60,7 @@ export function OverallDashboard() {
 
 export function BuyerDashboard() {
   return <div className="wl-screen">
-    <PageTitle eyebrow="BUYER WORKSPACE" title="Procurement overview" description="Track PET bottle supply, active requirements and purchases." action={<Link to="/buyer/requirements/new" className="btn btn-primary wl-create-btn"><Plus size={19} /> Create buying requirement</Link>} />
+    <PageTitle eyebrow="BUYER WORKSPACE" title="Buying overview" description="Track PET bottle supply, active requirements and purchases." action={<Link to="/buyer/requirements/new" className="btn btn-primary wl-create-btn"><Plus size={19} /> Create buying requirement</Link>} />
     <div className="wl-stat-grid">
       <Stat icon={<Handshake size={23} />} label="Active requirements" value="—" detail="Awaiting Firestore" tone="green" />
       <Stat icon={<Package size={23} />} label="Incoming PET listings" value="—" detail="Awaiting Firestore" tone="mint" />
@@ -55,7 +72,7 @@ export function BuyerDashboard() {
       <div className="wl-panel-heading"><div><h2>Recommended incoming PET bottles</h2><p>Match results will be based on your active buying requirements and compatible seller listings.</p></div><Link className="wl-inline-link" to="/buyer/materials">Browse all <ArrowRight size={17} /></Link></div>
       <EmptyState title="PET bottle recommendations will appear here" description="Matching will consider bottle colour and condition, known quantity, service area and fulfilment method. Unknown estimated weight cannot satisfy a minimum quantity requirement." icon={<Boxes size={34} />} action={<Link to="/buyer/requirements" className="btn btn-outline">View buying requirements <ArrowRight size={17} /></Link>} />
     </section>
-    <section className="wl-buyer-next"><div><span className="wl-next-icon"><Leaf size={23} /></span><h3>Build your PET sourcing pipeline</h3><p>Preview your purchasing criteria. Publishing will be enabled after Firebase integration.</p></div><Link to="/buyer/requirements/new" className="btn btn-primary">Preview requirement <ArrowRight size={16} /></Link></section>
+    <section className="wl-buyer-next"><div><span className="wl-next-icon"><Leaf size={23} /></span><h3>Start buying smarter</h3><p>Preview your purchasing criteria. Publishing will be enabled after Firebase integration.</p></div><Link to="/buyer/requirements/new" className="btn btn-primary">Preview requirement <ArrowRight size={16} /></Link></section>
   </div>
 }
 
@@ -69,7 +86,7 @@ export function IncomingMaterials() {
 
 export function BuyingRequirements() {
   return <div className="wl-screen">
-    <PageTitle eyebrow="PET PROCUREMENT" title="Buying requirements" description="Manage the PET bottle types, quantities, prices and service areas your business is seeking." action={<Link className="btn btn-primary wl-create-btn" to="/buyer/requirements/new"><Plus size={19} /> Design requirement</Link>} />
+    <PageTitle eyebrow="BUYING" title="Buying requirements" description="Manage the PET bottles, quantities and prices you want to buy." action={<Link className="btn btn-primary wl-create-btn" to="/buyer/requirements/new"><Plus size={19} /> Design requirement</Link>} />
     <div className="wl-demo-notice"><BadgeCheck size={18} /> Firestore integration pending: no browser-only requirements will be displayed as published records.</div>
     <div className="wl-requirement-list">
       <EmptyState title="Requirements service not yet connected" description="Once the integration lead connects buyer_requirements, this page will show your authenticated Firestore records, with real statuses and editing controls." icon={<Handshake size={34} />} action={<Link className="btn btn-primary" to="/buyer/requirements/new"><Plus size={18} /> Preview a requirement</Link>} />
@@ -96,7 +113,7 @@ export function RequirementForm() {
     setPreview(toRequirementEditableFields(form))
   }
   return <div className="wl-screen">
-    <PageTitle eyebrow="BUYER PROCUREMENT" title="Create PET buying requirement" description="Define clear PET bottle purchasing criteria for nearby suppliers." />
+    <PageTitle eyebrow="BUYING" title="Create PET buying requirement" description="Tell suppliers what PET bottles you want to buy." />
     <div className="wl-demo-notice"><BadgeCheck size={18} /> Prototype only: you can preview a requirement, but it is not published or saved. Firebase must be connected for real publishing.</div>
     <form className="wl-form-card" onSubmit={submit}>
       <div className="wl-form-grid">
