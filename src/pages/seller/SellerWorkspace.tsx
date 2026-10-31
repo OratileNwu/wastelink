@@ -6,65 +6,45 @@ import './SellerWorkspace.css'
 
 type SellerWorkspaceProps = {
   sellerId: string
+  sellerName?: string
   listings: SellerListing[]
   offers: Offer[]
   transactions: Transaction[]
   loading?: boolean
   error?: string | null
   onCreateListing?: (listing: CreateListingInput) => Promise<void>
-  onViewListings?: () => void
-  onViewOffers?: () => void
-  onViewTransactions?: () => void
   onOpenListing?: (listingId: string) => void
   onRetry?: () => void
 }
 
-/**
- * Seller-only navigation while the integration lead sets up app routing.
- * This component never invents data or claims that a listing is saved.
- */
+/** Frontend-only seller navigation. No generated records, credentials or pretend saves. */
 export default function SellerWorkspace({
-  sellerId,
-  listings,
-  offers,
-  transactions,
-  loading,
-  error,
-  onCreateListing,
-  onViewListings,
-  onViewOffers,
-  onViewTransactions,
-  onOpenListing,
-  onRetry,
+  sellerId, sellerName, listings, offers, transactions, loading, error,
+  onCreateListing, onOpenListing, onRetry,
 }: SellerWorkspaceProps) {
-  const [view, setView] = useState<'dashboard' | 'create'>('dashboard')
-
-  if (view === 'create') {
-    return (
-      <CreateListing
-        onCancel={() => setView('dashboard')}
-        onCreate={onCreateListing ? async (payload) => {
-          await onCreateListing(payload)
-          setView('dashboard')
-        } : undefined}
-      />
-    )
-  }
-
+  const [creating, setCreating] = useState(false)
   return (
     <SellerDashboard
       sellerId={sellerId}
+      sellerName={sellerName}
       listings={listings}
       offers={offers}
       transactions={transactions}
       loading={loading}
       error={error}
-      onCreateListing={() => setView('create')}
-      onViewListings={onViewListings}
-      onViewOffers={onViewOffers}
-      onViewTransactions={onViewTransactions}
+      onCreateListing={() => setCreating(true)}
       onOpenListing={onOpenListing}
       onRetry={onRetry}
+      onCloseCreate={() => setCreating(false)}
+      createContent={creating ? (
+        <CreateListing
+          onCancel={() => setCreating(false)}
+          onCreate={onCreateListing ? async (payload) => {
+            await onCreateListing(payload)
+            setCreating(false)
+          } : undefined}
+        />
+      ) : undefined}
     />
   )
 }
