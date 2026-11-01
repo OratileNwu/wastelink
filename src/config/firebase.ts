@@ -17,6 +17,7 @@ const requiredConfig = [
   firebaseConfig.authDomain,
   firebaseConfig.projectId,
   firebaseConfig.appId,
+  firebaseConfig.storageBucket,
 ];
 
 if (requiredConfig.some((value) => !value)) {
