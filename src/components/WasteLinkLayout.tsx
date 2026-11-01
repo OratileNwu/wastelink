@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { UserActivity } from '../types'
+import { useAuth } from '../contexts/useAuth'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck } from 'lucide-react'
+import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, LogOut } from 'lucide-react'
 
 type NavItem = { label: string; to: string; icon: ComponentType<{ size?: number; strokeWidth?: number }> }
 
@@ -39,6 +40,7 @@ function NavSection({ title, items, onNavigate }: { title: string; items: NavIte
 }
 
 export function WasteLinkLayout() {
+  const { firebaseUser, profile, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const isBuyer = location.pathname.startsWith('/buyer') || ['/marketplace', '/offers', '/my-purchases'].includes(location.pathname)
@@ -47,10 +49,9 @@ export function WasteLinkLayout() {
   const [navOpen, setNavOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  useEffect(() => { setNavOpen(false) }, [location.pathname])
-
   function searchRequirements(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setNavOpen(false)
     navigate('/buyer/requirements?q=' + encodeURIComponent(query.trim()))
   }
 
@@ -76,13 +77,15 @@ export function WasteLinkLayout() {
         <div className="wl-topbar-right">
           <label className="wl-view-selector"><span>Workspace preview</span>
             <span className="wl-view-select-wrap">
-              <select aria-label="Switch workspace" value={currentView} onChange={(event) => navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value)}>
+              <select aria-label="Switch workspace" value={currentView} onChange={(event) => { setNavOpen(false); navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value); }}>
                 <option value="overall">Overall</option>{supportedActivities.map((activity) => <option key={activity} value={activity}>{activity === 'buyer' ? 'Buyer' : 'Seller'}</option>)}
               </select><ChevronDown size={13} aria-hidden="true" />
             </span>
           </label>
           <Link to="/notifications" className="wl-icon-button" aria-label="Notifications"><Bell size={21} /></Link>
-          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>Account not connected</strong><small>Preview mode</small></span><ChevronDown size={15} /></Link>
+          {!firebaseUser && <><Link to="/login" className="wl-icon-button" aria-label="Sign in">Sign in</Link><Link to="/register" className="wl-icon-button" aria-label="Create account">Join</Link></>}
+          {firebaseUser && <button type="button" className="wl-icon-button" aria-label="Sign out" title="Sign out" onClick={() => { void logout().then(() => navigate("/login")); }}><LogOut size={19} /></button>}
+          <Link to="/settings" className="wl-user"><span className="wl-avatar"><CircleUserRound size={21} /></span><span className="wl-user-copy"><strong>{profile?.fullName || firebaseUser?.email || "Account not connected"}</strong><small>{profile?.email || (firebaseUser ? "WasteLink account" : "Preview mode")}</small></span><ChevronDown size={15} /></Link>
         </div>
       </header>
       <main className="wl-page"><Outlet /></main>

@@ -27,6 +27,7 @@ export interface DocumentTimestamps {
 export interface Address {
   streetAddress?: string;
   suburb?: string;
+  postalCode?: string;
   city: string;
   province: string;
   country: string;

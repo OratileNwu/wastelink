@@ -3,19 +3,18 @@ import {
   ArrowRight, Bell, Box, Check, ChevronDown, ChevronRight,
   ClipboardList, Handshake, LayoutGrid, Leaf,
   Package, PackageOpen, Plus, Recycle, Search, Settings,
-  Truck, Users, Wallet, type LucideIcon,
+  Truck, Wallet, type LucideIcon,
 } from 'lucide-react'
-import type { ListingMatch, ListingStatus, Offer, SellerListing, Transaction, UserNotification } from '../../types'
+import type { ListingStatus, Offer, SellerListing, Transaction, UserNotification } from '../../types'
 import './SellerDashboard.css'
 
-type Page = 'overview' | 'materials' | 'matches' | 'groups' | 'collections' | 'transactions' | 'notifications' | 'profile'
+type Page = 'overview' | 'materials' | 'offers' | 'collections' | 'transactions' | 'notifications' | 'profile'
 type Props = {
   sellerId: string
   sellerName?: string
   listings: SellerListing[]
   offers: Offer[]
   transactions: Transaction[]
-  matches?: ListingMatch[]
   notifications?: UserNotification[]
   loading?: boolean
   error?: string | null
@@ -31,8 +30,7 @@ const human = (s: string) => s.replaceAll('_',' ')
 const nav: {id:Page;label:string;icon:LucideIcon}[] = [
   {id:'overview',label:'Overview',icon:LayoutGrid},
   {id:'materials',label:'My materials',icon:Box},
-  {id:'matches',label:'Buyer matches',icon:Handshake},
-  {id:'groups',label:'Group collections',icon:Users},
+  {id:'offers',label:'Incoming offers',icon:Handshake},
   {id:'collections',label:'Collections',icon:Truck},
   {id:'transactions',label:'Transactions',icon:ClipboardList},
   {id:'notifications',label:'Notifications',icon:Bell},
@@ -42,7 +40,7 @@ function Empty({icon:Icon,title,detail,button,onClick}:{icon:LucideIcon;title:st
   return <div className="wl-empty"><span className="wl-empty-icon"><Icon size={23}/></span><strong>{title}</strong><p>{detail}</p>{button&&onClick&&<button type="button" onClick={onClick}>{button} <ArrowRight size={14}/></button>}</div>
 }
 export default function SellerDashboard({
-  sellerId,sellerName,listings,offers,transactions,matches=[],notifications=[],
+  sellerId,sellerName,listings,offers,transactions,notifications=[],
   loading=false,error=null,onCreateListing,onOpenListing,onRetry,createContent,onCloseCreate,
 }:Props){
   const [page,setPage]=useState<Page>('overview')
@@ -53,7 +51,6 @@ export default function SellerDashboard({
   const mine=listings.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
   const myOffers=offers.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
   const mySales=transactions.filter(item=>item.sellerId===sellerId).sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0))
-  const myMatches=matches.filter(m=>mine.some(l=>l.listingId===m.listingId))
   const myNotices=notifications.filter(n=>n.recipientId===sellerId)
   const currentOffer=myOffers.filter(x=>x.offerStatus==='pending')
   const scheduled=mySales.filter(x=>['collection_scheduled','in_progress','awaiting_weighing'].includes(x.transactionStatus))
@@ -93,11 +90,11 @@ export default function SellerDashboard({
       <div className="wl-brand"><span><Leaf size={20}/></span><strong>Waste<b>Link</b></strong></div>
       <div className="wl-nav-title">WORKSPACE</div>
       <nav aria-label="Seller pages" className="wl-nav">
-        {nav.slice(0,6).map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>go(id)} className={page===id&&!createContent?'active':''}><Icon size={17}/><span>{label}</span>{id==='matches'&&myMatches.length>0&&<em>{myMatches.length}</em>}</button>)}
+        {nav.slice(0,5).map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>go(id)} className={page===id&&!createContent?'active':''}><Icon size={17}/><span>{label}</span>{id==='offers'&&currentOffer.length>0&&<em>{currentOffer.length}</em>}</button>)}
       </nav>
       <div className="wl-nav-title wl-nav-title--account">ACCOUNT</div>
       <nav aria-label="Account pages" className="wl-nav">
-        {nav.slice(6).map(({id,label,icon:Icon})=><button key={id} type="button" className={page===id&&!createContent?'active':''} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span>{id==='notifications'&&myNotices.filter(n=>!n.isRead).length>0&&<em>{myNotices.filter(n=>!n.isRead).length}</em>}</button>)}
+        {nav.slice(5).map(({id,label,icon:Icon})=><button key={id} type="button" className={page===id&&!createContent?'active':''} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span>{id==='notifications'&&myNotices.filter(n=>!n.isRead).length>0&&<em>{myNotices.filter(n=>!n.isRead).length}</em>}</button>)}
       </nav>
       <div className="wl-sidebar-bottom"><div className="wl-impact"><div><Leaf size={15}/> Your verified impact</div><strong>{weight(paidKg)} kg</strong><small>Recorded paid PET sales</small></div><small>WasteLink · Seller workspace</small></div>
     </aside>
@@ -114,14 +111,13 @@ export default function SellerDashboard({
       </header>
       <main className="wl-main">
         {createContent ? createContent : <>
-          <div className="wl-intro"><div><p className="wl-date">{calendarDate}</p><h1>{page==='overview'? `${greeting}${firstName?`, ${firstName}`:''}`:opening}</h1><p>{page==='overview'?"Here's what's happening with your recyclable materials today.":page==='materials'?'All your recyclable PET listings in one place.':page==='matches'?'Buyer compatibility records for your materials.':page==='groups'?'See whether your small quantities can be combined for pickup.':page==='collections'?'Follow the status of arranged pickups.':page==='transactions'?'Track confirmed transactions and payments.':page==='notifications'?'Updates associated with your seller account.':'Your account information and preferences.'}</p></div>{!['profile','notifications'].includes(page)&&<button type="button" className="wl-btn" disabled={!onCreateListing} onClick={onCreateListing}><Plus size={17}/> List recyclable material</button>}</div>
+          <div className="wl-intro"><div><p className="wl-date">{calendarDate}</p><h1>{page==='overview'? `${greeting}${firstName?`, ${firstName}`:''}`:opening}</h1><p>{page==='overview'?"Here's what's happening with your recyclable materials today.":page==='materials'?'All your recyclable PET listings in one place.':page==='offers'?'Review buyer offers for your PET listings.':page==='collections'?'Follow the status of arranged pickups.':page==='transactions'?'Track confirmed transactions and payments.':page==='notifications'?'Updates associated with your seller account.':'Your account information and preferences.'}</p></div>{!['profile','notifications'].includes(page)&&<button type="button" className="wl-btn" disabled={!onCreateListing} onClick={onCreateListing}><Plus size={17}/> List recyclable material</button>}</div>
           {error&&<div className="wl-error" role="alert">{error} {onRetry&&<button type="button" onClick={onRetry}>Try again</button>}</div>}
           {loading?<div className="wl-loading" role="status">Loading seller records…</div>:error?null:<>
             {page==='overview'&&<>
               <section className="wl-kpis" aria-label="Seller dashboard summary">
                 {[
                   {label:'Active listings',value:String(active),detail:'PET listings available',icon:Box,tone:'green'},
-                  {label:'Buyer matches',value:String(myMatches.filter(x=>x.matchStatus==='compatible').length),detail:'Compatible matches',icon:Handshake,tone:'mint'},
                   {label:'Pending offers',value:String(currentOffer.length),detail:'Awaiting your response',icon:ClipboardList,tone:'yellow'},
                   {label:'Completed',value:String(completed.length),detail:'Transactions',icon:Check,tone:'blue'},
                   {label:'Verified PET sold',value:weight(paidKg)+' kg',detail:'Paid completed sales',icon:Leaf,tone:'green'},
@@ -133,11 +129,10 @@ export default function SellerDashboard({
                     {mine.length?<ul className="wl-material-list">{mine.slice(0,3).map(listingRow)}</ul>:<Empty icon={PackageOpen} title="No materials listed yet" detail="List your PET bottles to start connecting with buyers." button="Create your first listing" onClick={onCreateListing}/>}
                   </section>
                   <section className="wl-card"><div className="wl-card-heading"><div><h2>Incoming offers</h2><p>Respond to buyers interested in your materials</p></div><span className="wl-mini-pill">{currentOffer.length} pending</span></div>
-                    {currentOffer.length?<ul className="wl-offer-list">{currentOffer.slice(0,3).map(o=><li key={o.offerId}><span className="wl-buyer-mark"><Handshake size={17}/></span><div><strong>Offer for {listingName(o.listingId)}</strong><small>{o.proposedWeightKg===undefined?'Weight to be verified':`${weight(o.proposedWeightKg)} kg proposed`}</small></div><strong>{cash(o.offeredPricePerKg)}/kg</strong><button type="button" onClick={()=>go('matches')}>View</button></li>)}</ul>:<Empty icon={Handshake} title="No incoming offers" detail="Offers will appear when a buyer is interested in your materials."/>}
+                    {currentOffer.length?<ul className="wl-offer-list">{currentOffer.slice(0,3).map(o=><li key={o.offerId}><span className="wl-buyer-mark"><Handshake size={17}/></span><div><strong>Offer for {listingName(o.listingId)}</strong><small>{o.proposedWeightKg===undefined?'Weight to be verified':`${weight(o.proposedWeightKg)} kg proposed`}</small></div><strong>{cash(o.offeredPricePerKg)}/kg</strong><button type="button" onClick={()=>go('offers')}>View</button></li>)}</ul>:<Empty icon={Handshake} title="No incoming offers" detail="Offers will appear when a buyer is interested in your materials."/>}
                   </section>
                 </div>
                 <div className="wl-stack">
-                  <section className="wl-card wl-match-card"><span className="wl-match-icon"><Handshake size={24}/></span><p className="wl-new-tag">BUYER OPPORTUNITIES</p><h2>{myMatches.filter(x=>x.matchStatus==='compatible').length} compatible buyer matches</h2><p>Your PET listings can be matched against buyer requirements.</p><button type="button" className="wl-btn" onClick={()=>go('matches')}>Explore matches <ArrowRight size={16}/></button></section>
                   <section className="wl-card"><div className="wl-card-heading"><div><h2>Upcoming collection</h2><p>Confirmed pickups and delivery progress</p></div></div>
                     {scheduled.length?<ul className="wl-record-list">{scheduled.slice(0,2).map(recordCard)}</ul>:<Empty icon={Truck} title="No collection scheduled" detail="Agreed pickup arrangements will appear here."/>}
                   </section>
@@ -149,9 +144,7 @@ export default function SellerDashboard({
               {filtered.length?<ul className="wl-material-list">{filtered.map(listingRow)}</ul>:<Empty icon={Package} title={mine.length?'No matching materials':'Your materials will appear here'} detail={mine.length?'Change your search or status filter.':'Start by adding PET bottles.'} button={mine.length?undefined:'List material'} onClick={onCreateListing}/>}
               {expanded&&mine.some(x=>x.listingId===expanded)&&(()=>{const item=mine.find(x=>x.listingId===expanded)!;return <div className="wl-detail"><button type="button" onClick={()=>setExpanded(null)}>Close details</button><h3>{item.listingTitle}</h3><p>{item.description||'No description supplied.'}</p><dl><div><dt>Quantity</dt><dd>{item.quantityDescription}</dd></div><div><dt>Weight</dt><dd>{item.estimatedWeightKg===undefined?'Unknown':`${weight(item.estimatedWeightKg)} kg (estimate)`}</dd></div><div><dt>Condition</dt><dd>{human(item.bottleCondition)}</dd></div><div><dt>Collection</dt><dd>{human(item.collectionMethod)}</dd></div></dl></div>})()}
             </section>}
-            {page==='matches'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Buyer matches</h2><p>Compatibility is not the same as a confirmed purchase.</p></div></div>{myMatches.length?<ul className="wl-record-list">{myMatches.map((m,i)=><li className="wl-record" key={`${m.listingId}-${m.requirementId}-${i}`}><span className="wl-record-icon"><Handshake size={18}/></span><div><strong>{listingName(m.listingId)}</strong><small>Buyer requirement: {m.requirementId}</small></div><span className="wl-pill" data-kind={m.matchStatus}>{human(m.matchStatus)}</span></li>)}</ul>:<Empty icon={Handshake} title="No buyer matches yet" detail="Compatible buyer requirements will appear here when matching data becomes available."/>}</section>}
-            {page==='matches'&&myOffers.length>0&&<section className="wl-card wl-full" style={{marginTop:16}}><div className="wl-card-heading"><div><h2>Incoming buyer offers</h2><p>Buyer-submitted PET rates; final price follows verified weight.</p></div></div><ul className="wl-offer-list">{myOffers.map(o=><li key={o.offerId}><span className="wl-buyer-mark"><Handshake size={17}/></span><div><strong>{listingName(o.listingId)}</strong><small>{human(o.offerStatus)} · {o.proposedWeightKg===undefined?'Weight pending':`${weight(o.proposedWeightKg)} kg proposed`}</small></div><strong>{cash(o.offeredPricePerKg)}/kg</strong></li>)}</ul></section>}
-            {page==='groups'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Group collections</h2><p>Combine compatible quantities for fewer pickup trips.</p></div></div><Empty icon={Users} title="Group collection planning" detail="Collection pooling is not connected in this MVP yet. No groups or savings are claimed."/></section>}
+            {page==='offers'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Incoming buyer offers</h2><p>Buyer-submitted PET rates; final material value depends on verified weight.</p></div><span className="wl-mini-pill">{currentOffer.length} pending</span></div>{myOffers.length?<ul className="wl-offer-list">{myOffers.map(o=><li key={o.offerId}><span className="wl-buyer-mark"><Handshake size={17}/></span><div><strong>{listingName(o.listingId)}</strong><small>{human(o.offerStatus)} · {o.proposedWeightKg===undefined?'Weight pending':`${weight(o.proposedWeightKg)} kg proposed`}</small></div><strong>{cash(o.offeredPricePerKg)}/kg</strong></li>)}</ul>:<Empty icon={Handshake} title="No incoming offers yet" detail="Offers will appear here when buyers submit offers for your PET listings."/>}</section>}
             {page==='collections'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Collections</h2><p>Agreed pickup and delivery activity</p></div></div>{scheduled.length?<ul className="wl-record-list">{scheduled.map(recordCard)}</ul>:<Empty icon={Truck} title="No active collections" detail="Confirmed collection arrangements will appear here."/>}</section>}
             {page==='transactions'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Transaction history</h2><p>Material earnings: {cash(paidValue)} from paid completed sales</p></div></div>{mySales.length?<ul className="wl-record-list">{mySales.map(recordCard)}</ul>:<Empty icon={Wallet} title="No transactions yet" detail="Your sales will appear once you and a buyer agree on an offer."/>}</section>}
             {page==='notifications'&&<section className="wl-card wl-full"><div className="wl-card-heading"><div><h2>Notifications</h2><p>Updates related to your seller account</p></div></div>{myNotices.length?<ul className="wl-note-list">{myNotices.map(n=><li key={n.notificationId}><Bell size={16}/><span><strong>{n.title}</strong><small>{n.message}</small></span></li>)}</ul>:<Empty icon={Bell} title="All caught up" detail="You have no notifications yet."/>}</section>}

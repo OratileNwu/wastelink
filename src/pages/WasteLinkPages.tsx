@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, Boxes, Check, ChevronRight, ClipboardList, Clock3, Handshake, Leaf, Package, PackageSearch, Plus, Recycle, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react'
 import { emptyRequirementForm, todayLocal, toRequirementEditableFields, validateRequirementForm } from '../features/buyer/requirements'
 import type { RequirementEditableFields, RequirementFormValues } from '../features/buyer/requirements'
-import type { BottleColour, BottleCondition, FulfilmentChoice } from '../types'
+import type { BuyerRequirement, BottleColour, BottleCondition, FulfilmentChoice, SellerListing } from '../types'
 
 /** Presentation-only imagery; never used for material listings or user content.
  * Pexels licensed photography (free for website/app use, attribution appreciated).
@@ -48,7 +48,7 @@ export function OverallDashboard() {
       <div className="wl-overall-section-heading"><div><Eyebrow>YOUR WORKSPACES</Eyebrow><h2>Where would you like to start?</h2><p>Move between buying and selling without switching accounts.</p></div></div>
       <div className="wl-destination-grid">
         <Link to="/buyer" className="wl-destination-card wl-buyer-destination"><div className="wl-workspace-photo"><img src={DASHBOARD_PHOTOS.buy} alt="Clear recyclable plastic bottles" loading="lazy" /><span className="wl-workspace-photo-label">PET · BUY</span></div><span className="wl-destination-icon"><ShoppingBag size={28} /></span><span className="wl-destination-count">01 / BUY</span><h3>Source materials<br />with confidence</h3><p>Explore PET listings, manage buying requirements and track purchasing activity.</p><span className="wl-destination-arrow">Enter buyer workspace <ArrowRight size={19} /></span></Link>
-        <Link to="/seller" className="wl-destination-card wl-seller-destination"><div className="wl-workspace-photo"><img src={DASHBOARD_PHOTOS.sell} alt="Recyclable plastic bottles being collected" loading="lazy" /><span className="wl-workspace-photo-label">PET · SELL</span></div><span className="wl-destination-icon"><Recycle size={28} /></span><span className="wl-destination-count">02 / SELL</span><h3>Give PET bottles<br />a second life</h3><p>Connect with buyers who need materials. Seller functionality will be linked with the team's work.</p><span className="wl-destination-arrow">Seller workspace <ArrowRight size={19} /></span></Link>
+        <Link to="/seller" className="wl-destination-card wl-seller-destination"><div className="wl-workspace-photo"><img src={DASHBOARD_PHOTOS.sell} alt="Recyclable plastic bottles being collected" loading="lazy" /><span className="wl-workspace-photo-label">PET · SELL</span></div><span className="wl-destination-icon"><Recycle size={28} /></span><span className="wl-destination-count">02 / SELL</span><h3>Give PET bottles<br />a second life</h3><p>Connect with buyers who need materials. Publish PET listings and manage your seller activity from one workspace.</p><span className="wl-destination-arrow">Seller workspace <ArrowRight size={19} /></span></Link>
       </div>
       <div className="wl-overall-split">
         <div className="wl-overall-process"><Eyebrow>THE WASTELINK WAY</Eyebrow><h2>A circular marketplace, made simple.</h2><p>From recyclable material to meaningful exchange, the platform keeps buyers and sellers connected.</p><div className="wl-process-items"><div><span>01</span><div><strong>Discover</strong><p>Find available materials or share what you want to buy.</p></div></div><div><span>02</span><div><strong>Connect</strong><p>Agree on requirements and coordinate directly with your counterparty.</p></div></div><div><span>03</span><div><strong>Complete</strong><p>Record purchases and verified material exchanges when services are connected.</p></div></div></div></div>
@@ -72,32 +72,81 @@ export function BuyerDashboard() {
       <div className="wl-panel-heading"><div><h2>Recommended incoming PET bottles</h2><p>Match results will be based on your active buying requirements and compatible seller listings.</p></div><Link className="wl-inline-link" to="/buyer/materials">Browse all <ArrowRight size={17} /></Link></div>
       <EmptyState title="PET bottle recommendations will appear here" description="Matching will consider bottle colour and condition, known quantity, service area and fulfilment method. Unknown estimated weight cannot satisfy a minimum quantity requirement." icon={<Boxes size={34} />} action={<Link to="/buyer/requirements" className="btn btn-outline">View buying requirements <ArrowRight size={17} /></Link>} />
     </section>
-    <section className="wl-buyer-next"><div><span className="wl-next-icon"><Leaf size={23} /></span><h3>Start buying smarter</h3><p>Preview your purchasing criteria. Publishing will be enabled after Firebase integration.</p></div><Link to="/buyer/requirements/new" className="btn btn-primary">Preview requirement <ArrowRight size={16} /></Link></section>
+    <section className="wl-buyer-next"><div><span className="wl-next-icon"><Leaf size={23} /></span><h3>Start buying smarter</h3><p>Publish PET buying requirements and discover active seller listings.</p></div><Link to="/buyer/requirements/new" className="btn btn-primary">Preview requirement <ArrowRight size={16} /></Link></section>
   </div>
 }
 
-export function IncomingMaterials() {
-  return <div className="wl-screen"><PageTitle eyebrow="MARKETPLACE" title="Incoming materials" description="Discover PET plastic bottle listings shared by suppliers." />
-    <section className="wl-content-panel wl-spaced"><div className="wl-panel-heading"><div><h2>Available listings</h2><p>Listings and matched recommendations will load here after integration.</p></div></div>
-      <EmptyState title="No PET bottle listings available yet" description="We haven't connected the team's listing service. No sample supplier names, prices or material quantities are shown." icon={<Boxes size={35} />} />
+type IncomingMaterialsProps = {
+  listings?: SellerListing[];
+  loading?: boolean;
+  error?: string | null;
+};
+export function IncomingMaterials({ listings = [], loading = false, error = null }: IncomingMaterialsProps) {
+  return <div className="wl-screen">
+    <PageTitle eyebrow="MARKETPLACE" title="Incoming materials" description="Discover active PET plastic bottle listings shared by suppliers." />
+    <section className="wl-content-panel wl-spaced">
+      <div className="wl-panel-heading"><div><h2>Available listings</h2><p>Live listings published by WasteLink sellers.</p></div><span>{listings.length} available</span></div>
+      {loading ? <p role="status">Loading available PET listings…</p> : error ? <div className="wl-form-error" role="alert">{error}</div> : listings.length ? <div className="wl-requirement-list">
+        {listings.map((listing) => <article className="wl-content-panel wl-spaced" key={listing.listingId}>
+          <div className="wl-panel-heading"><div><h2>{listing.listingTitle}</h2><p>PET bottles · {listing.collectionAddress.suburb ? listing.collectionAddress.suburb + ", " : ""}{listing.collectionAddress.city}, {listing.collectionAddress.province}</p></div><span className="wl-status-pill">{listing.listingStatus}</span></div>
+          {listing.imageUrls[0] && <img src={listing.imageUrls[0]} alt={listing.listingTitle} loading="lazy" style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: 12 }} />}
+          <p>{listing.description || "No additional description provided."}</p>
+          <div className="wl-form-grid">
+            <p><strong>Quantity:</strong> {listing.quantityDescription}</p>
+            <p><strong>Estimated weight:</strong> {listing.estimatedWeightKg === undefined ? "Not provided" : listing.estimatedWeightKg.toLocaleString("en-ZA") + " kg (estimate)"}</p>
+            <p><strong>Condition:</strong> {listing.bottleCondition}</p>
+            <p><strong>Colour:</strong> {listing.bottleColour}</p>
+            <p><strong>Fulfilment:</strong> {listing.collectionMethod.replaceAll("_", " ")}</p>
+            <p><strong>Seller delivery fee:</strong> {listing.deliveryFee === undefined ? "Not offered" : new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(listing.deliveryFee)}</p>
+          </div>
+          <p className="wl-preview-disclaimer">This listing is available for discovery. A match is not a confirmed purchase.</p>
+        </article>)}
+      </div> : <EmptyState title="No active PET listings yet" description="When sellers publish PET bottle listings, they will appear here. No sample listings or prices are shown." icon={<Boxes size={35} />} />}
+      <div className="wl-form-actions"><Link to="/buyer/requirements/new" className="btn btn-primary">Create a buying requirement <ArrowRight size={16} /></Link></div>
     </section>
   </div>
 }
 
-export function BuyingRequirements() {
+type BuyingRequirementsProps = {
+  requirements?: BuyerRequirement[];
+  loading?: boolean;
+  error?: string | null;
+};
+export function BuyingRequirements({ requirements = [], loading = false, error = null }: BuyingRequirementsProps) {
+  const money = (value: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(value);
   return <div className="wl-screen">
-    <PageTitle eyebrow="BUYING" title="Buying requirements" description="Manage the PET bottles, quantities and prices you want to buy." action={<Link className="btn btn-primary wl-create-btn" to="/buyer/requirements/new"><Plus size={19} /> Design requirement</Link>} />
-    <div className="wl-demo-notice"><BadgeCheck size={18} /> Firestore integration pending: no browser-only requirements will be displayed as published records.</div>
+    <PageTitle eyebrow="BUYING" title="Buying requirements" description="Manage the PET bottles, quantities and prices you want to buy." action={<Link className="btn btn-primary wl-create-btn" to="/buyer/requirements/new"><Plus size={19} /> Create requirement</Link>} />
     <div className="wl-requirement-list">
-      <EmptyState title="Requirements service not yet connected" description="Once the integration lead connects buyer_requirements, this page will show your authenticated Firestore records, with real statuses and editing controls." icon={<Handshake size={34} />} action={<Link className="btn btn-primary" to="/buyer/requirements/new"><Plus size={18} /> Preview a requirement</Link>} />
+      {loading ? <p role="status">Loading your buying requirements…</p> : error ? <div className="wl-form-error" role="alert">{error}</div> : requirements.length ? requirements.map((requirement) => <article className="wl-content-panel wl-spaced" key={requirement.requirementId}>
+        <div className="wl-panel-heading"><div><h2>{requirement.requirementTitle}</h2><p>{requirement.collectionAreas.join(", ")}</p></div><span className="wl-status-pill">{requirement.availabilityStatus}</span></div>
+        <p>{requirement.description}</p>
+        <div className="wl-form-grid">
+          <p><strong>Price:</strong> {money(requirement.pricePerKg)}/kg</p>
+          <p><strong>Quantity:</strong> {requirement.minimumWeightKg.toLocaleString("en-ZA")} kg minimum{requirement.maximumWeightKg === undefined ? "" : " · " + requirement.maximumWeightKg.toLocaleString("en-ZA") + " kg maximum"}</p>
+          <p><strong>Colours:</strong> {requirement.acceptedBottleColours.join(", ")}</p>
+          <p><strong>Conditions:</strong> {requirement.acceptedConditions.join(", ")}</p>
+          <p><strong>Fulfilment:</strong> {requirement.acceptedCollectionMethods.map((method) => method.replaceAll("_", " ")).join(", ")}</p>
+          <p><strong>Collection fee policy:</strong> {requirement.collectionFeePolicy.replaceAll("_", " ")}</p>
+        </div>
+      </article>) : <EmptyState title="No buying requirements yet" description="Create and publish your first PET buying requirement. It will be saved to your WasteLink account." icon={<Handshake size={34} />} action={<Link className="btn btn-primary" to="/buyer/requirements/new"><Plus size={18} /> Create requirement</Link>} />}
     </div>
   </div>
 }
 
-export function RequirementForm() {
+export function RequirementForm({ onPublish }: { onPublish?: (fields: RequirementEditableFields, validUntilInput: string) => Promise<void> }) {
   const [form, setForm] = useState<RequirementFormValues>(emptyRequirementForm)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<RequirementEditableFields | null>(null)
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState('')
+  async function publish() {
+    if (!preview || !onPublish) return
+    setPublishing(true)
+    setPublishError('')
+    try { await onPublish(preview, form.validUntilInput) }
+    catch (reason) { setPublishError(reason instanceof Error ? reason.message : 'Unable to publish your requirement.') }
+    finally { setPublishing(false) }
+  }
   function update<K extends keyof RequirementFormValues>(key: K, value: RequirementFormValues[K]) {
     setForm((current) => ({ ...current, [key]: value }))
     setPreview(null)
@@ -114,7 +163,7 @@ export function RequirementForm() {
   }
   return <div className="wl-screen">
     <PageTitle eyebrow="BUYING" title="Create PET buying requirement" description="Tell suppliers what PET bottles you want to buy." />
-    <div className="wl-demo-notice"><BadgeCheck size={18} /> Prototype only: you can preview a requirement, but it is not published or saved. Firebase must be connected for real publishing.</div>
+    <div className="wl-demo-notice"><BadgeCheck size={18} /> Preview your PET buying criteria, then publish it to your WasteLink account.</div>
     <form className="wl-form-card" onSubmit={submit}>
       <div className="wl-form-grid">
         <label className="wl-field">Material type<input className="form-input" value="PET plastic bottles" readOnly /></label>
@@ -136,7 +185,7 @@ export function RequirementForm() {
       </div>
       {error && <div className="wl-form-error" role="alert">{error}</div>}
       <div className="wl-form-actions"><Link to="/buyer/requirements" className="btn btn-outline">Cancel</Link><button type="submit" className="btn btn-primary">Preview requirement</button></div>
-      {preview && <section className="wl-form-preview" aria-label="Requirement preview"><div className="wl-preview-heading"><BadgeCheck size={20}/><strong>Preview only — not published</strong></div><h3>{preview.requirementTitle}</h3><p>Material: PET bottles</p><p>Price: {new Intl.NumberFormat('en-ZA',{style:'currency',currency:'ZAR'}).format(preview.pricePerKg)}/kg</p><p>Weight: {preview.minimumWeightKg.toLocaleString('en-ZA')} kg minimum{preview.maximumWeightKg === undefined ? ', no maximum' : ' – ' + preview.maximumWeightKg.toLocaleString('en-ZA') + ' kg maximum'}</p><p>Areas: {preview.collectionAreas.join(', ')}</p><p>Fulfilment: {preview.acceptedCollectionMethods.map((value) => value === 'BUYER_COLLECTION' ? 'Buyer collection' : 'Seller delivery').join(', ')}</p><p>Accepted conditions: {preview.acceptedConditions.join(', ')} | Colours: {preview.acceptedBottleColours.join(', ')}</p><p>Expiry: {form.validUntilInput || 'Not specified'}</p><p className="wl-preview-disclaimer">Nothing was sent to Firestore. Integration is required before this requirement can be published.</p></section>}
+      {preview && <section className="wl-form-preview" aria-label="Requirement preview"><div className="wl-preview-heading"><BadgeCheck size={20}/><strong>Requirement preview</strong></div><h3>{preview.requirementTitle}</h3><p>Material: PET bottles</p><p>Price: {new Intl.NumberFormat('en-ZA',{style:'currency',currency:'ZAR'}).format(preview.pricePerKg)}/kg</p><p>Weight: {preview.minimumWeightKg.toLocaleString('en-ZA')} kg minimum{preview.maximumWeightKg === undefined ? ', no maximum' : ' – ' + preview.maximumWeightKg.toLocaleString('en-ZA') + ' kg maximum'}</p><p>Areas: {preview.collectionAreas.join(', ')}</p><p>Fulfilment: {preview.acceptedCollectionMethods.map((value) => value === 'BUYER_COLLECTION' ? 'Buyer collection' : 'Seller delivery').join(', ')}</p><p>Accepted conditions: {preview.acceptedConditions.join(', ')} | Colours: {preview.acceptedBottleColours.join(', ')}</p><p>Expiry: {form.validUntilInput || 'Not specified'}</p><p className="wl-preview-disclaimer">Review your criteria before publishing. The requirement will be saved to your authenticated WasteLink account.</p>{publishError && <div className="wl-form-error" role="alert">{publishError}</div>}{onPublish && <div className="wl-form-actions"><button type="button" className="btn btn-primary" disabled={publishing} onClick={() => void publish()}>{publishing ? "Publishing…" : "Publish requirement"}</button></div>}</section>}
     </form>
   </div>
 }
