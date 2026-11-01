@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { UserActivity } from '../types'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 import type { ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, LayoutDashboard, Leaf, Menu, Package, Recycle, Search, Settings, ShoppingBag, Truck, LogOut } from 'lucide-react'
@@ -49,10 +49,9 @@ export function WasteLinkLayout() {
   const [navOpen, setNavOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  useEffect(() => { setNavOpen(false) }, [location.pathname])
-
   function searchRequirements(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setNavOpen(false)
     navigate('/buyer/requirements?q=' + encodeURIComponent(query.trim()))
   }
 
@@ -78,7 +77,7 @@ export function WasteLinkLayout() {
         <div className="wl-topbar-right">
           <label className="wl-view-selector"><span>Workspace preview</span>
             <span className="wl-view-select-wrap">
-              <select aria-label="Switch workspace" value={currentView} onChange={(event) => navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value)}>
+              <select aria-label="Switch workspace" value={currentView} onChange={(event) => { setNavOpen(false); navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value); }}>
                 <option value="overall">Overall</option>{supportedActivities.map((activity) => <option key={activity} value={activity}>{activity === 'buyer' ? 'Buyer' : 'Seller'}</option>)}
               </select><ChevronDown size={13} aria-hidden="true" />
             </span>
