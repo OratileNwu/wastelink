@@ -47,13 +47,6 @@ export default function ProfileSettings({ profile, onSave }: Props) {
   const [temporaryPhotoUrl, setTemporaryPhotoUrl] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setFullName(profile.fullName);
-    setPhoneNumber(profile.phoneNumber ?? "");
-    setLocation({ ...emptyAddress, ...profile.location });
-    setEnabledActivities(profile.enabledActivities ?? []);
-    setPhotoPreview(profile.profileImageUrl ?? "");
-  }, [profile]);
 
   useEffect(() => () => {
     if (temporaryPhotoUrl) URL.revokeObjectURL(temporaryPhotoUrl);
