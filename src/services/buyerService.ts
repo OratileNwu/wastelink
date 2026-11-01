@@ -1,5 +1,6 @@
 import {
-  addDoc,
+  collection,
+  doc,
   collection,
   limit,
   onSnapshot,
@@ -7,6 +8,7 @@ import {
   serverTimestamp,
   Timestamp,
   where,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import type { BuyerRequirement, SellerListing } from "../types";
@@ -57,12 +59,13 @@ export async function createBuyerRequirement(
     ? Timestamp.fromDate(new Date(`${validUntilInput}T23:59:59`))
     : undefined;
 
-  await addDoc(collection(db, "buyer_requirements"), {
+  const requirementRef = doc(collection(db, "buyer_requirements"));
+  await setDoc(requirementRef, {
     ...requiredFields,
     ...(maximumWeightKg === undefined ? {} : { maximumWeightKg }),
     ...(validUntil ? { validUntil } : {}),
     buyerId,
-    requirementId: "",
+    requirementId: requirementRef.id,
     availabilityStatus: "active",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
