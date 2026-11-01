@@ -139,6 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new AggregateError(
           [profileSaveError, signOutError],
           "The WasteLink profile could not be saved, and signing out also failed. Check Firestore security rules and sign out before trying again.",
+          { cause: signOutError },
         );
       }
 
