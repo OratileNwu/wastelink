@@ -15,13 +15,7 @@ export default function SellerWorkspaceRoute() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!firebaseUser) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
+    if (!firebaseUser) return;
     const ready = new Set<string>();
     const markReady = (key: string) => {
       ready.add(key);
