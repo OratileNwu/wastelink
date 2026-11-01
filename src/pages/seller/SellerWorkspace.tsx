@@ -18,7 +18,7 @@ type SellerWorkspaceProps = {
   onRetry?: () => void
 }
 
-/** Frontend-only seller navigation. No generated records, credentials or pretend saves. */
+/** Firebase-backed seller workspace. No generated records or pretend saves. */
 export default function SellerWorkspace({
   sellerId, sellerName, listings, offers, transactions, notifications = [], loading, error,
   onCreateListing, onOpenListing, onRetry,
