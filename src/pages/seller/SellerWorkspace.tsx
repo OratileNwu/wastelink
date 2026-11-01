@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Offer, SellerListing, Transaction } from '../../types'
+import type { Offer, SellerListing, Transaction, UserNotification } from '../../types'
 import CreateListing, { type CreateListingInput } from './CreateListing'
 import SellerDashboard from './SellerDashboard'
 import './SellerWorkspace.css'
@@ -10,6 +10,7 @@ type SellerWorkspaceProps = {
   listings: SellerListing[]
   offers: Offer[]
   transactions: Transaction[]
+  notifications?: UserNotification[]
   loading?: boolean
   error?: string | null
   onCreateListing?: (listing: CreateListingInput) => Promise<void>
@@ -19,7 +20,7 @@ type SellerWorkspaceProps = {
 
 /** Frontend-only seller navigation. No generated records, credentials or pretend saves. */
 export default function SellerWorkspace({
-  sellerId, sellerName, listings, offers, transactions, loading, error,
+  sellerId, sellerName, listings, offers, transactions, notifications = [], loading, error,
   onCreateListing, onOpenListing, onRetry,
 }: SellerWorkspaceProps) {
   const [creating, setCreating] = useState(false)
@@ -30,6 +31,7 @@ export default function SellerWorkspace({
       listings={listings}
       offers={offers}
       transactions={transactions}
+      notifications={notifications}
       loading={loading}
       error={error}
       onCreateListing={() => setCreating(true)}
