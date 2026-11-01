@@ -18,7 +18,7 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (firebaseUser) return <Navigate to="/" replace />;
+  if (firebaseUser) return <Navigate to="/app" replace />;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,7 +26,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to sign in. Please try again.");
     } finally {
@@ -65,7 +65,7 @@ export function RegisterPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (firebaseUser) return <Navigate to="/" replace />;
+  if (firebaseUser) return <Navigate to="/app" replace />;
 
   function toggleActivity(activity: UserActivity) {
     setEnabledActivities((current) => current.includes(activity)
@@ -79,7 +79,7 @@ export function RegisterPage() {
     setSubmitting(true);
     try {
       await register({ fullName, email, password, enabledActivities });
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to create your account. Please try again.");
     } finally {
