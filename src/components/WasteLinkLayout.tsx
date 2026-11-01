@@ -9,7 +9,7 @@ import { Bell, Boxes, ChevronDown, ClipboardList, CircleUserRound, Handshake, La
 type NavItem = { label: string; to: string; icon: ComponentType<{ size?: number; strokeWidth?: number }> }
 
 const platformItems: NavItem[] = [
-  { label: 'Platform overview', to: '/', icon: LayoutDashboard },
+  { label: 'Platform overview', to: '/app', icon: LayoutDashboard },
   { label: 'Explore marketplace', to: '/buyer/materials', icon: Boxes },
   { label: 'Buyer workspace', to: '/buyer', icon: ShoppingBag },
   { label: 'Seller workspace', to: '/seller', icon: Recycle },
@@ -32,7 +32,7 @@ function NavSection({ title, items, onNavigate }: { title: string; items: NavIte
   return <section className="wl-side-section" aria-label={title}>
     <span className="wl-side-label">{title}</span>
     <div className="wl-side-links">
-      {items.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === '/' || to === '/buyer'} onClick={onNavigate} className={({ isActive }) => 'wl-side-link' + (isActive ? ' is-active' : '')}>
+      {items.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === '/app' || to === '/buyer'} onClick={onNavigate} className={({ isActive }) => 'wl-side-link' + (isActive ? ' is-active' : '')}>
         <Icon size={20} strokeWidth={1.9} /><span>{label}</span>
       </NavLink>)}
     </div>
@@ -58,7 +58,7 @@ export function WasteLinkLayout() {
   return <div className="wl-shell">
     {navOpen && <button type="button" className="wl-sidebar-backdrop" aria-label="Close navigation" onClick={() => setNavOpen(false)} />}
     <aside className={'wl-sidebar' + (navOpen ? ' is-open' : '')}>
-      <Link to="/" className="wl-brand" onClick={() => setNavOpen(false)}>
+      <Link to="/app" className="wl-brand" onClick={() => setNavOpen(false)}>
         <span className="wl-brand-icon"><Leaf size={25} /></span><span>Waste<span>Link</span></span>
       </Link>
       <div className="wl-sidebar-scroll">
@@ -77,7 +77,7 @@ export function WasteLinkLayout() {
         <div className="wl-topbar-right">
           <label className="wl-view-selector"><span>Workspace preview</span>
             <span className="wl-view-select-wrap">
-              <select aria-label="Switch workspace" value={currentView} onChange={(event) => { setNavOpen(false); navigate(event.target.value === 'overall' ? '/' : '/' + event.target.value); }}>
+              <select aria-label="Switch workspace" value={currentView} onChange={(event) => { setNavOpen(false); navigate(event.target.value === 'overall' ? '/app' : '/' + event.target.value); }}>
                 <option value="overall">Overall</option>{supportedActivities.map((activity) => <option key={activity} value={activity}>{activity === 'buyer' ? 'Buyer' : 'Seller'}</option>)}
               </select><ChevronDown size={13} aria-hidden="true" />
             </span>
