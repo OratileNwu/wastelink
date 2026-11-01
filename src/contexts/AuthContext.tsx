@@ -136,12 +136,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         await signOut(auth);
       } catch (signOutError) {
-        const signOutMessage =
-          signOutError instanceof Error ? signOutError.message : String(signOutError);
-
-        throw new Error(
-          `The WasteLink profile could not be saved, and signing out also failed: ${signOutMessage}. Check Firestore security rules and sign out before trying again.`,
-          { cause: profileSaveError },
+        throw new AggregateError(
+          [profileSaveError, signOutError],
+          "The WasteLink profile could not be saved, and signing out also failed. Check Firestore security rules and sign out before trying again.",
         );
       }
 
