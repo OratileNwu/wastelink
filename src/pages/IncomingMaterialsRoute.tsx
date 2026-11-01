@@ -12,10 +12,7 @@ export default function IncomingMaterialsRoute() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!firebaseUser) {
-      setLoading(false);
-      return;
-    }
+    if (!firebaseUser) return;
     return subscribeToMarketplaceListings(
       (records) => {
         setListings(records);
