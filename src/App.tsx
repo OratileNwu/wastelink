@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { WasteLinkLayout } from './components/WasteLinkLayout'
 import ProfileSettingsRoute from './pages/ProfileSettingsRoute'
+import SellerWorkspaceRoute from './pages/SellerWorkspaceRoute'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
 import {
   OverallDashboard,
@@ -9,7 +10,6 @@ import {
   BuyingRequirements,
   RequirementForm,
   WorkspaceEmptyPage,
-  SellerHandoff,
 } from './pages/WasteLinkPages'
 
 export default function App() {
@@ -28,7 +28,7 @@ export default function App() {
             <Route path="/buyer/transactions" element={<WorkspaceEmptyPage kind="transactions" />} />
             <Route path="/notifications" element={<WorkspaceEmptyPage kind="notifications" />} />
             <Route path="/settings" element={<ProfileSettingsRoute />} />
-            <Route path="/seller" element={<SellerHandoff />} />
+            <Route path="/seller" element={<SellerWorkspaceRoute />} />
             <Route path="/marketplace" element={<Navigate to="/buyer/materials" replace />} />
             <Route path="/offers" element={<Navigate to="/buyer/requirements" replace />} />
             <Route path="/my-purchases" element={<Navigate to="/buyer/transactions" replace />} />
