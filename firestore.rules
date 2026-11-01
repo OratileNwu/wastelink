@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validActivities(value) {
+      return value is list
+        && value.size() >= 1
+        && value.size() <= 2
+        && value.hasOnly(['seller', 'buyer']);
+    }
+
+    match /users/{uid} {
+      allow read: if owns(uid);
+
+      allow create: if owns(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && validActivities(request.resource.data.enabledActivities)
+        && request.resource.data.accountStatus == 'active'
+        && request.resource.data.hasCompletedOnboarding == false
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.keys().hasOnly([
+          'uid', 'fullName', 'email', 'enabledActivities',
+          'accountStatus', 'hasCompletedOnboarding', 'emailVerified',
+          'createdAt', 'updatedAt'
+        ]);
+
+      allow update: if owns(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'fullName', 'phoneNumber', 'location', 'enabledActivities', 'updatedAt'
+        ])
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && validActivities(request.resource.data.enabledActivities);
+
+      allow delete: if false;
+    }
+
+    match /listings/{listingId} {
+      allow read: if signedIn()
+        && (resource.data.listingStatus == 'active' || resource.data.sellerId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.listingId == listingId
+        && request.resource.data.materialType == 'PET_BOTTLES'
+        && request.resource.data.listingStatus == 'active'
+        && request.resource.data.listingTitle is string
+        && request.resource.data.listingTitle.size() > 0
+        && request.resource.data.quantityDescription is string
+        && request.resource.data.collectionAddress is map
+        && request.resource.data.collectionAddress.city is string
+        && request.resource.data.collectionAddress.province is string
+        && request.resource.data.collectionAddress.country is string
+        && request.resource.data.imageUrls is list
+        && request.resource.data.imageUrls.size() >= 1
+        && request.resource.data.imageUrls.size() <= 5
+        && request.resource.data.collectionMethod in ['BUYER_COLLECTION', 'SELLER_DELIVERY', 'BOTH']
+        && (
+          request.resource.data.collectionMethod == 'BUYER_COLLECTION'
+          || (request.resource.data.deliveryFee is number && request.resource.data.deliveryFee >= 0)
+        )
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.keys().hasOnly([
+          'listingId', 'sellerId', 'materialType', 'listingTitle', 'description',
+          'estimatedWeightKg', 'quantityDescription', 'bottleCondition', 'bottleColour',
+          'isSorted', 'isClean', 'imageUrls', 'collectionMethod', 'deliveryFee',
+          'collectionAddress', 'listingStatus', 'createdAt', 'updatedAt'
+        ]);
+
+      allow update, delete: if false;
+    }
+
+    match /buyer_requirements/{requirementId} {
+      allow read: if signedIn()
+        && (resource.data.availabilityStatus == 'active' || resource.data.buyerId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.requirementId == requirementId
+        && request.resource.data.materialType == 'PET_BOTTLES'
+        && request.resource.data.requirementTitle is string
+        && request.resource.data.requirementTitle.size() > 0
+        && request.resource.data.minimumWeightKg is number
+        && request.resource.data.minimumWeightKg > 0
+        && request.resource.data.pricePerKg is number
+        && request.resource.data.pricePerKg > 0
+        && request.resource.data.acceptedBottleColours is list
+        && request.resource.data.acceptedBottleColours.size() > 0
+        && request.resource.data.acceptedConditions is list
+        && request.resource.data.acceptedConditions.size() > 0
+        && request.resource.data.acceptedCollectionMethods is list
+        && request.resource.data.acceptedCollectionMethods.size() > 0
+        && request.resource.data.collectionAreas is list
+        && request.resource.data.collectionAreas.size() > 0
+        && request.resource.data.availabilityStatus == 'active'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.keys().hasOnly([
+          'requirementId', 'buyerId', 'materialType', 'requirementTitle',
+          'description', 'minimumWeightKg', 'maximumWeightKg', 'pricePerKg',
+          'acceptedBottleColours', 'acceptedConditions', 'requiresSortedBottles',
+          'requiresCleanBottles', 'acceptedCollectionMethods', 'collectionAreas',
+          'collectionFeePolicy', 'availabilityStatus', 'validUntil',
+          'createdAt', 'updatedAt'
+        ]);
+
+      allow update, delete: if false;
+    }
+
+    match /offers/{offerId} {
+      allow read: if signedIn()
+        && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if signedIn()
+        && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.recipientId == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.recipientId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+      allow create, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
