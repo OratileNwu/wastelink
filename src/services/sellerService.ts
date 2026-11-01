@@ -85,15 +85,16 @@ export async function createSellerListing(
   );
 
   try {
-    const imageUrls = await Promise.all(
-      input.photos.map(async (file, index) => {
-        const objectRef = uploadedRefs[index];
-        await uploadBytes(objectRef, file, { contentType: file.type });
-        return getDownloadURL(objectRef);
-      }),
-    );
+    const imageUrls: string[] = [];
+    for (let index = 0; index < input.photos.length; index += 1) {
+      const file = input.photos[index];
+      const objectRef = uploadedRefs[index];
+      await uploadBytes(objectRef, file, { contentType: file.type });
+      imageUrls.push(await getDownloadURL(objectRef));
+    }
 
-    const { photos: _photos, ...listingFields } = input;
+    const listingFields = { ...input };
+    Reflect.deleteProperty(listingFields, "photos");
     await setDoc(listingRef, {
       ...listingFields,
       listingId: listingRef.id,
