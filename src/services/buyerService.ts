@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  collection,
   limit,
   onSnapshot,
   query,
