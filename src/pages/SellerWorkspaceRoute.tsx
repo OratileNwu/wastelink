@@ -82,6 +82,7 @@ export default function SellerWorkspaceRoute() {
       listings={listings}
       offers={offers}
       transactions={transactions}
+      notifications={notifications}
       loading={loading}
       error={error}
       onRetry={() => window.location.reload()}
